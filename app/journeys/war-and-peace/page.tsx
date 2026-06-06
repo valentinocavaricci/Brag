@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppNav } from "../../components/app-nav";
 
 const brags = [
   {
@@ -20,16 +21,17 @@ const brags = [
 
 export default function WarAndPeacePage() {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <section className="mx-auto max-w-4xl px-6 py-10">
+    <main className="min-h-screen bg-white pb-28 text-black md:pb-0">
+      <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
+        <AppNav active="Boards" />
         <Link
           href="/tiles/reading"
-          className="text-sm text-gray-500 transition hover:text-black"
+          className="mt-5 inline-block text-sm text-gray-500 transition hover:text-black"
         >
           ← Back to Reading
         </Link>
 
-        <header className="mt-12 rounded-[2rem] border border-gray-200 bg-gray-50 p-8 md:p-10">
+        <header className="mt-5 rounded-[2rem] border border-gray-200 bg-gray-50 p-8 md:p-10">
           <div className="mb-5 flex flex-wrap gap-2">
             <span className="rounded-full bg-gray-200 px-3 py-1 text-sm text-gray-700">
               Reading

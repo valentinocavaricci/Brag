@@ -4,9 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { AppNav } from "../components/app-nav";
+import {
+  boardCoverBackground,
+  type BoardCover,
+  useCreatedBoards,
+} from "../lib/boards";
 
 const stats = [
-  { label: "Boards", value: "6" },
+  { label: "Boards", value: "8" },
   { label: "Journeys", value: "9" },
   { label: "Brags", value: "24" },
   { label: "Pins", value: "672" },
@@ -95,28 +100,63 @@ const tiles = [
     image: null,
     size: "medium",
   },
+  {
+    name: "Knitting",
+    description: "Patterns, stitches, cozy experiments, and finished pieces.",
+    href: "#",
+    count: "4 brags",
+    detail: "scarf progress, new stitches",
+    pins: "42 pins",
+    privacy: "Public",
+    image: "/knitting.png",
+    size: "medium",
+  },
+  {
+    name: "Singing",
+    description: "Voice practice, covers, warmups, and performance proof.",
+    href: "#",
+    count: "6 brags",
+    detail: "vocal runs, covers, practice",
+    pins: "64 pins",
+    privacy: "Public",
+    image: "/singing.png",
+    size: "small",
+  },
 ] as const;
+
+type ProfileTile = {
+  name: string;
+  description: string;
+  href: string;
+  count: string;
+  detail: string;
+  pins: string;
+  privacy: string;
+  image?: string | null;
+  cover?: BoardCover;
+  size: keyof typeof profileBoardSizes;
+};
 
 const profileBoardSizes = {
   small: {
     tile: "col-span-1 row-span-1",
-    body: "p-4 sm:p-5",
-    title: "text-3xl sm:text-4xl",
+    body: "p-4",
+    title: "text-2xl sm:text-3xl",
     description: "line-clamp-2 text-sm leading-5",
     detail: "line-clamp-1 text-[0.65rem] tracking-[0.14em]",
   },
   medium: {
     tile: "col-span-2 row-span-1",
-    body: "p-5 sm:p-6",
-    title: "text-4xl sm:text-5xl",
-    description: "line-clamp-2 text-sm leading-6 sm:text-base",
+    body: "p-4 sm:p-5",
+    title: "text-3xl sm:text-4xl",
+    description: "line-clamp-2 text-sm leading-5",
     detail: "line-clamp-1 text-xs tracking-[0.16em]",
   },
   large: {
     tile: "col-span-2 row-span-2",
-    body: "p-5 sm:p-6",
-    title: "text-5xl sm:text-6xl",
-    description: "line-clamp-2 text-base leading-6 sm:text-lg",
+    body: "p-5",
+    title: "text-4xl sm:text-5xl",
+    description: "line-clamp-2 text-sm leading-6 sm:text-base",
     detail: "line-clamp-1 text-xs tracking-[0.18em]",
   },
 } as const;
@@ -152,11 +192,32 @@ const pinnedJourneys = [
 ];
 
 export default function ProfilePage() {
+  const createdBoards = useCreatedBoards();
   const [isCliqueEditorOpen, setIsCliqueEditorOpen] = useState(false);
   const [clique, setClique] = useState(initialClique);
   const [activeProfileView, setActiveProfileView] = useState<"boards" | "pins">(
     "boards",
   );
+  const profileStats = stats.map((stat) =>
+    stat.label === "Boards"
+      ? { ...stat, value: String(Number(stat.value) + createdBoards.length) }
+      : stat,
+  );
+  const profileTiles: ProfileTile[] = [
+    ...createdBoards.map((board) => ({
+      name: board.name,
+      description:
+        board.description || "A new place to collect progress and proof.",
+      href: "#",
+      count: "0 brags",
+      detail: "new board",
+      pins: "0 pins",
+      privacy: "Public",
+      cover: board.cover,
+      size: board.size,
+    })),
+    ...tiles,
+  ];
 
   function removeFriend(name: string) {
     setClique((currentClique) =>
@@ -176,73 +237,63 @@ export default function ProfilePage() {
       >
         <AppNav active="Profile" />
 
-        <header className="px-1 py-4 sm:px-4 lg:px-10">
-          <div className="grid gap-6 sm:grid-cols-[10rem_1fr] sm:items-center lg:grid-cols-[12rem_1fr]">
-            <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full bg-zinc-950 ring-[5px] ring-zinc-200 sm:mx-auto sm:h-36 sm:w-36">
+        <header className="-mt-8 py-2">
+          <div className="relative h-28 overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_24%_35%,rgba(56,189,248,0.62)_0%,transparent_34%),radial-gradient(circle_at_78%_18%,rgba(99,102,241,0.5)_0%,transparent_32%),linear-gradient(120deg,#07111f_0%,#12345b_48%,#0f766e_100%)] sm:h-32">
+            <Link
+              href="/profile/edit"
+              className="profile-soft-button absolute right-3 top-3 z-10 inline-flex h-10 w-32 items-center justify-center rounded-full border border-white/70 bg-white/88 px-4 text-sm font-semibold text-zinc-700 shadow-sm shadow-zinc-950/10 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-zinc-950 sm:right-4 sm:top-4"
+            >
+              Edit Profile
+            </Link>
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:px-5">
+            <div className="relative -mt-10 h-36 w-36 shrink-0 overflow-hidden rounded-full bg-zinc-950 ring-4 ring-[#fbfbfb] sm:-mt-12 sm:h-40 sm:w-40">
               <Image
                 src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
                 alt="Valentino Cavaricci profile photo"
                 fill
-                sizes="(min-width: 640px) 144px, 128px"
-                className="scale-[1.55] object-cover object-[48%_43%]"
+                sizes="(min-width: 640px) 160px, 144px"
+                className="scale-[1.3] object-cover object-[48%_43%]"
                 priority
               />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-col gap-4">
-                <div className="flex min-w-0 flex-col justify-between gap-3 lg:flex-row lg:items-start">
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-                      <h1 className="truncate text-3xl font-black tracking-tight text-zinc-950 sm:text-[2.35rem] sm:leading-none">
-                        Valentino Cavaricci
-                      </h1>
-                      <span className="hidden text-sm font-semibold text-zinc-400 sm:inline">
-                        Public profile · Orange County, CA
-                      </span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href="/profile/edit"
-                    className="inline-flex h-10 w-fit shrink-0 items-center rounded-full border border-zinc-200 bg-white px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
-                  >
-                    Edit Profile
-                  </Link>
+            <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-3xl font-semibold text-zinc-950 sm:text-4xl">
+                    Valentino Cavaricci
+                  </h1>
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                    Public
+                  </span>
                 </div>
+                <p className="mt-1 text-sm font-normal text-zinc-400">
+                  @valentino · Orange County, CA
+                </p>
+              </div>
 
-                <div className="max-w-3xl">
-                  <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
-                    {stats.map((stat) => (
-                      <div
-                        key={stat.label}
-                        className="inline-flex items-baseline gap-1.5 text-zinc-950"
-                      >
-                        <span className="text-lg font-black tracking-tight">
-                          {stat.value}
-                        </span>
-                        <span className="text-base font-semibold text-zinc-600">
-                          {stat.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+              <p className="mt-3 max-w-2xl text-[15px] font-normal leading-5 text-zinc-600">
+                Keeping proof of the work: books finished, miles logged, ideas
+                built, and a life in progress.
+              </p>
 
-                  <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-                    Documenting visible proof of progress across reading,
-                    fitness, career, faith, and personal growth.
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-zinc-500 sm:hidden">
-                    Public profile · Orange County, CA
-                  </p>
-                </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[15px] font-normal text-zinc-500">
+                {profileStats.map((stat) => (
+                  <span key={stat.label}>
+                    <strong className="font-semibold text-zinc-800">
+                      {stat.value}
+                    </strong>{" "}
+                    {stat.label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </header>
 
-        <section className="-mt-1 px-1 sm:px-4 lg:px-10">
+        <section className="-mt-5 px-1 sm:px-4 lg:px-10">
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
@@ -254,101 +305,81 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Link
-                href="/messages"
-                className="inline-flex h-10 w-fit items-center gap-2 rounded-full bg-zinc-950 px-4 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <rect x="4" y="5" width="16" height="14" rx="4" />
-                  <path d="M8 10h8" />
-                  <path d="M8 14h5" />
-                  <path d="m9 19-3 3" />
-                </svg>
-                Messages
-              </Link>
               <button
                 type="button"
                 onClick={() => setIsCliqueEditorOpen(true)}
-                className="inline-flex h-10 w-fit items-center rounded-full border border-zinc-200 bg-white px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
+                className="profile-soft-button inline-flex h-10 w-32 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
               >
                 Edit Clique
               </button>
             </div>
           </div>
-          <div className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-start gap-6 py-2">
-              {clique.map((person) => (
-                <div
-                  key={person.name}
-                  className="flex w-24 shrink-0 flex-col items-center"
-                >
-                  <div className="relative rounded-full bg-gradient-to-tr from-zinc-200 via-zinc-100 to-zinc-300 p-1">
-                    <div className="rounded-full bg-[#fbfbfb] p-1">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-full bg-zinc-100">
-                        <Image
-                          src={person.avatar}
-                          alt={`${person.name} profile photo`}
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
-                      </div>
-                      {"unreadMessages" in person ? (
-                        <span
-                          className="absolute -right-0.5 -top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-[#fbfbfb] bg-zinc-950 text-white shadow-sm shadow-zinc-300"
-                          aria-label={`${person.name} sent ${person.unreadMessages} unread messages`}
-                        >
-                          <svg
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2.4"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-                            <path d="M10 19a2 2 0 0 0 4 0" />
-                          </svg>
-                        </span>
-                      ) : null}
+          <div className="grid snap-x snap-mandatory grid-flow-col auto-cols-[calc((100%-1rem)/3)] gap-2 overflow-x-auto overscroll-x-contain scroll-smooth py-2 [scrollbar-width:none] sm:auto-cols-[calc((100%-2rem)/5)] lg:auto-cols-[calc((100%-3.5rem)/8)] [&::-webkit-scrollbar]:hidden">
+            {clique.map((person) => (
+              <div
+                key={person.name}
+                className="flex min-w-0 snap-start snap-always flex-col items-center"
+              >
+                <div className="relative rounded-full bg-gradient-to-tr from-zinc-200 via-zinc-100 to-zinc-300 p-0.5">
+                  <div className="rounded-full bg-[#fbfbfb] p-0.5">
+                    <div className="relative h-[4.5rem] w-[4.5rem] overflow-hidden rounded-full bg-zinc-100">
+                      <Image
+                        src={person.avatar}
+                        alt={`${person.name} profile photo`}
+                        fill
+                        sizes="72px"
+                        className="object-cover"
+                      />
                     </div>
+                    {"unreadMessages" in person ? (
+                      <span
+                        className="absolute -right-0.5 -top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-[#fbfbfb] bg-zinc-950 text-white shadow-sm shadow-zinc-300"
+                        aria-label={`${person.name} sent ${person.unreadMessages} unread messages`}
+                      >
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2.4"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+                          <path d="M10 19a2 2 0 0 0 4 0" />
+                        </svg>
+                      </span>
+                    ) : null}
                   </div>
-                  <p className="mt-2 max-w-20 truncate text-center text-sm font-semibold text-zinc-700">
-                    {person.name}
-                  </p>
                 </div>
-              ))}
-            </div>
+                <p className="mt-2 max-w-20 truncate text-center text-sm font-semibold text-zinc-700">
+                  {person.name}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section>
-          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-            <div>
-              {activeProfileView === "pins" ? (
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                  My Pins
-                </p>
-              ) : null}
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">
-                {activeProfileView === "boards"
-                  ? "My Brag Boards"
-                  : "Progress I am watching."}
-              </h2>
-            </div>
+        <section className="-mt-9 overflow-hidden">
+          <div
+            key={activeProfileView}
+            className={
+              activeProfileView === "boards"
+                ? "animate-profile-swipe-right"
+                : "animate-profile-swipe-left"
+            }
+          >
+            <div className="mb-5 flex min-h-24 flex-col justify-between gap-3 sm:flex-row sm:items-end">
+              <div>
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">
+                  {activeProfileView === "boards"
+                    ? "My Brag Boards"
+                    : "My Pins"}
+                </h2>
+              </div>
 
-            <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
               <div
                 className="inline-flex h-11 rounded-full border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200"
                 aria-label="Profile content view"
@@ -357,7 +388,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setActiveProfileView("boards")}
                   aria-pressed={activeProfileView === "boards"}
-                  className={`grid h-9 w-10 place-items-center rounded-full text-zinc-600 transition ${
+                  className={`grid h-9 w-10 cursor-pointer place-items-center rounded-full text-zinc-600 transition ${
                     activeProfileView === "boards"
                       ? "bg-zinc-950 text-white shadow-sm shadow-zinc-300"
                       : "hover:bg-zinc-100 hover:text-zinc-950"
@@ -384,7 +415,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setActiveProfileView("pins")}
                   aria-pressed={activeProfileView === "pins"}
-                  className={`grid h-9 w-10 place-items-center rounded-full text-zinc-600 transition ${
+                  className={`grid h-9 w-10 cursor-pointer place-items-center rounded-full text-zinc-600 transition ${
                     activeProfileView === "pins"
                       ? "bg-zinc-950 text-white shadow-sm shadow-zinc-300"
                       : "hover:bg-zinc-100 hover:text-zinc-950"
@@ -409,21 +440,51 @@ export default function ProfilePage() {
               {activeProfileView === "boards" ? (
                 <Link
                   href="/boards/new"
-                  className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                  className="profile-primary-button inline-flex h-11 w-44 items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
                 >
                   <span aria-hidden="true" className="text-lg leading-none">
                     +
                   </span>
                   Create Board
                 </Link>
-              ) : null}
+              ) : (
+                <Link
+                  href="/explore"
+                  className="profile-primary-button inline-flex h-11 w-44 items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.3"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle cx="11" cy="11" r="6.5" />
+                    <path d="m16 16 4 4" />
+                  </svg>
+                  Find More Pins
+                </Link>
+              )}
+              </div>
             </div>
-          </div>
 
-          {activeProfileView === "boards" ? (
-            <div className="grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-4 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-3rem)/4))]">
-              {tiles.map((tile) => {
+            <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+              <div
+                className={`grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] transition duration-300 sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-5 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-4rem)/5))] ${
+                  activeProfileView === "boards"
+                    ? "visible opacity-100"
+                    : "invisible pointer-events-none opacity-0"
+                }`}
+                aria-hidden={activeProfileView !== "boards"}
+              >
+              {profileTiles.map((tile) => {
                 const size = profileBoardSizes[tile.size];
+                const backgroundImage = tile.cover
+                  ? boardCoverBackground(tile.cover)
+                  : undefined;
 
                 return (
                   <Link
@@ -431,7 +492,12 @@ export default function ProfilePage() {
                     href={tile.href}
                     className={`group relative flex min-w-0 overflow-hidden rounded-[1.35rem] border border-white/70 bg-zinc-900 shadow-sm shadow-zinc-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-zinc-300/70 sm:rounded-[1.5rem] ${size.tile}`}
                   >
-                    {tile.image ? (
+                    {tile.cover ? (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
+                        style={{ backgroundImage }}
+                      />
+                    ) : tile.image ? (
                       <div
                         className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
                         style={{ backgroundImage: `url(${tile.image})` }}
@@ -505,9 +571,16 @@ export default function ProfilePage() {
                   </Link>
                 );
               })}
-            </div>
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-3">
+              </div>
+
+              <div
+                className={`grid content-start gap-3 transition duration-300 lg:grid-cols-3 ${
+                  activeProfileView === "pins"
+                    ? "visible opacity-100"
+                    : "invisible pointer-events-none opacity-0"
+                }`}
+                aria-hidden={activeProfileView !== "pins"}
+              >
               {pinnedJourneys.map((pin) => (
                 <article
                   key={pin.title}
@@ -541,20 +614,21 @@ export default function ProfilePage() {
                   </p>
                 </article>
               ))}
+              </div>
             </div>
-          )}
+          </div>
         </section>
       </section>
 
       {isCliqueEditorOpen ? (
-        <section className="fixed inset-0 z-50 grid place-items-center bg-[#fbfbfb]/28 px-5 py-8 backdrop-blur-[5px]">
-          <div className="animate-modal-in w-full max-w-2xl rounded-[1.75rem] border border-white/70 bg-white/72 p-5 shadow-2xl shadow-zinc-950/18 ring-1 ring-white/50 backdrop-blur-2xl sm:p-6">
+        <section className="clique-editor-backdrop fixed inset-0 z-50 grid place-items-center bg-[#fbfbfb]/28 px-5 py-8 backdrop-blur-[5px]">
+          <div className="clique-editor-modal animate-modal-in w-full max-w-2xl rounded-[1.75rem] border border-white/70 bg-white/72 p-5 shadow-2xl shadow-zinc-950/18 ring-1 ring-white/50 backdrop-blur-2xl sm:p-6">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
                 <button
                   type="button"
                   onClick={() => setIsCliqueEditorOpen(false)}
-                  className="inline-flex h-10 w-fit items-center gap-2 rounded-full border border-zinc-200/80 bg-white/80 px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-300/70 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
+                  className="clique-editor-secondary inline-flex h-10 w-fit items-center gap-2 rounded-full border border-zinc-200/80 bg-white/80 px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-300/70 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
                 >
                   <span aria-hidden="true" className="text-lg leading-none">
                     ←
@@ -568,12 +642,12 @@ export default function ProfilePage() {
                   Keep it real.
                 </h2>
               </div>
-              <span className="w-fit rounded-full bg-white/65 px-3 py-1 text-xs font-black text-zinc-500 shadow-sm shadow-zinc-200/70">
+              <span className="clique-editor-pill w-fit rounded-full bg-white/65 px-3 py-1 text-xs font-black text-zinc-500 shadow-sm shadow-zinc-200/70">
                 {clique.length}/{maxCliqueSize}
               </span>
             </div>
 
-            <div className="mt-6 rounded-3xl border border-white/80 bg-white/78 p-4 shadow-sm shadow-zinc-300/70 backdrop-blur-xl">
+            <div className="clique-editor-panel mt-6 rounded-3xl border border-white/80 bg-white/78 p-4 shadow-sm shadow-zinc-300/70 backdrop-blur-xl">
               {clique.length > 0 ? (
                 <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4">
                   {clique.map((person) => (
@@ -581,7 +655,7 @@ export default function ProfilePage() {
                       key={person.name}
                       className="flex min-w-0 flex-col items-center"
                     >
-                      <div className="relative rounded-full bg-gradient-to-tr from-zinc-200 via-zinc-100 to-zinc-300 p-1">
+                      <div className="clique-editor-avatar-ring relative rounded-full bg-gradient-to-tr from-zinc-200 via-zinc-100 to-zinc-300 p-1">
                         <div className="relative h-14 w-14 overflow-hidden rounded-full bg-zinc-100">
                           <Image
                             src={person.avatar}
@@ -600,14 +674,14 @@ export default function ProfilePage() {
                           ×
                         </button>
                       </div>
-                      <p className="mt-2 max-w-20 truncate text-center text-sm font-bold text-zinc-700">
+                      <p className="clique-editor-name mt-2 max-w-20 truncate text-center text-sm font-bold text-zinc-700">
                         {person.name}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="grid min-h-40 place-items-center rounded-3xl bg-zinc-50/80 px-6 text-center">
+                <div className="clique-editor-empty grid min-h-40 place-items-center rounded-3xl bg-zinc-50/80 px-6 text-center">
                   <p className="max-w-sm text-sm font-bold leading-6 text-zinc-500">
                     Your clique is empty. Add only the people you actually want
                     in your corner.
@@ -616,7 +690,7 @@ export default function ProfilePage() {
               )}
 
               <button
-                className="mt-5 h-12 w-full rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
+                className="clique-editor-primary mt-5 h-12 w-full rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
                 disabled={clique.length >= maxCliqueSize}
                 type="button"
               >

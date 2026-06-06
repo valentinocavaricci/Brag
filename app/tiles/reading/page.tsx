@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
+import { BragAttachments } from "../../components/brag-attachments";
+import { AppNav } from "../../components/app-nav";
+import { useBrags } from "../../lib/brags";
 
 const board = {
   name: "Reading",
@@ -11,12 +15,6 @@ const board = {
   summary:
     "Books, reflections, and proof that long pages are turning into personal progress.",
 };
-
-const stats = [
-  { label: "Brags", value: "3" },
-  { label: "Journeys", value: "3" },
-  { label: "Done", value: "1" },
-];
 
 const boardViews = ["Brags", "Journeys"] as const;
 
@@ -50,48 +48,27 @@ const journeys = [
   },
 ];
 
-const recentBrags = [
-  {
-    marker: "Finished",
-    title: "Completed War and Peace",
-    source: "Journey: War and Peace",
-    body: "Finished the whole book and proved the scary goal could actually become a closed loop.",
-  },
-  {
-    marker: "Page 100",
-    title: "Found the rhythm",
-    source: "Journey: War and Peace",
-    body: "Got through the first hundred pages and started building momentum with the characters.",
-  },
-  {
-    marker: "Today",
-    title: "Read 30 minutes before bed",
-    source: "Standalone brag",
-    body: "A small proof moment directly on the Reading board, separate from any specific book journey.",
-  },
-];
-
 export default function ReadingPage() {
   const [activeView, setActiveView] =
     useState<(typeof boardViews)[number]>("Brags");
+  const brags = useBrags();
+  const boardBrags = brags.filter((brag) => brag.board === board.name);
+  const stats = [
+    { label: "Brags", value: String(boardBrags.length) },
+    { label: "Journeys", value: "3" },
+    { label: "Done", value: "1" },
+  ];
 
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-zinc-950">
-      <section className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6">
-        <nav className="flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight text-zinc-950"
-          >
-            BRAG
-          </Link>
-          <Link
-            href="/"
-            className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
-          >
-            Back
-          </Link>
-        </nav>
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-6 sm:px-8 lg:px-10">
+        <AppNav active="Boards" />
+        <Link
+          href="/boards"
+          className="w-fit text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
+        >
+          ← Back to Boards
+        </Link>
 
         <header className="overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
           <section className="relative h-44 overflow-hidden sm:h-52">
@@ -148,14 +125,20 @@ export default function ReadingPage() {
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-950 text-sm font-black text-white">
               R
             </div>
-            <button className="min-h-11 flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-left text-sm font-semibold text-zinc-500 transition hover:border-zinc-300 hover:bg-white">
+            <Link
+              href="/brags/new"
+              className="flex min-h-11 flex-1 items-center rounded-full border border-zinc-200 bg-zinc-50 px-4 text-left text-sm font-semibold text-zinc-500 transition hover:border-zinc-300 hover:bg-white"
+            >
               What did you prove today?
-            </button>
+            </Link>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-4">
-            <button className="rounded-full bg-zinc-950 px-4 py-3 text-sm font-black text-white transition hover:bg-zinc-800">
+            <Link
+              href="/brags/new"
+              className="rounded-full bg-zinc-950 px-4 py-3 text-center text-sm font-black text-white transition hover:bg-zinc-800"
+            >
               + Brag
-            </button>
+            </Link>
             <button className="rounded-full border border-zinc-200 px-4 py-3 text-sm font-black text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50">
               + Journey
             </button>
@@ -193,30 +176,53 @@ export default function ReadingPage() {
 
           {activeView === "Brags" ? (
             <div className="space-y-3">
-              {recentBrags.map((brag) => (
+              {boardBrags.map((brag) => (
                 <article
-                  key={brag.title}
-                  className="rounded-[1.25rem] border border-zinc-200 bg-white p-4 transition hover:bg-zinc-50 sm:p-5"
+                  key={brag.id}
+                  className="overflow-hidden rounded-[1.25rem] border border-zinc-200 bg-white transition hover:bg-zinc-50"
                 >
-                  <div className="flex items-start gap-3">
+                  {brag.attachments?.length ? (
+                    <BragAttachments attachments={brag.attachments} />
+                  ) : brag.type === "video" && brag.image ? (
+                    <div className="aspect-[4/3] bg-zinc-950">
+                      <video
+                        src={brag.image}
+                        controls
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : brag.image ? (
+                    <div className="relative aspect-[4/3] bg-zinc-100">
+                      <Image
+                        src={brag.image}
+                        alt={brag.title ?? `${brag.board} brag`}
+                        fill
+                        sizes="(min-width: 640px) 768px, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex items-start gap-3 p-4 sm:p-5">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-950 text-xs font-black text-white">
                       R
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-black text-zinc-950">
-                          {brag.title}
+                          {brag.title ?? "Proof moment"}
                         </p>
                         <span className="text-sm font-semibold text-zinc-400">
-                          {brag.marker}
+                          {brag.time}
                         </span>
                       </div>
                       <p className="mt-1 text-sm font-bold text-emerald-700">
                         {brag.source}
                       </p>
-                      <p className="mt-3 leading-7 text-zinc-600">
-                        {brag.body}
-                      </p>
+                      {brag.text ? (
+                        <p className="mt-3 leading-7 text-zinc-600">
+                          {brag.text}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </article>

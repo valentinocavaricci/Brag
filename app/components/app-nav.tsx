@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
   { label: "Home", href: "/", icon: "home" },
@@ -82,7 +83,7 @@ function NavIcon({ icon }: { icon: string }) {
 export function AppNav({ active = "Home" }: { active?: string }) {
   return (
     <>
-      <nav className="sticky top-0 z-30 -mx-5 border-b border-zinc-200/80 bg-[#fbfbfb]/92 px-5 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
+      <nav className="sticky top-0 z-30 -mx-5 bg-[#fbfbfb]/92 px-5 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <Link
             href="/"
@@ -92,39 +93,43 @@ export function AppNav({ active = "Home" }: { active?: string }) {
             BRAG
           </Link>
 
-          <div className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => {
-              const isActive = item.label === active;
+          <div className="flex items-center justify-end gap-2">
+            <div className="hidden items-center gap-1 md:flex">
+              {navItems.map((item) => {
+                const isActive = item.label === active;
 
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={
-                    item.primary
-                      ? "ml-2 inline-flex h-11 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
-                      : `inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition hover:bg-white hover:text-zinc-950 ${
-                          isActive
-                            ? "bg-white text-zinc-950 shadow-sm shadow-zinc-200"
-                            : "text-zinc-600"
-                        }`
-                  }
-                >
-                  <NavIcon icon={item.icon} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={
+                      item.primary
+                        ? "nav-primary-button ml-2 inline-flex h-11 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                        : `inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition hover:bg-white hover:text-zinc-950 ${
+                            isActive
+                              ? "bg-white text-zinc-950 shadow-sm shadow-zinc-200"
+                              : "text-zinc-600"
+                          }`
+                    }
+                  >
+                    <NavIcon icon={item.icon} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <ThemeToggle />
+
+            <Link
+              href="/brags/new"
+              className="grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800 md:hidden"
+              aria-label="Create a brag"
+            >
+              <NavIcon icon="plus" />
+            </Link>
           </div>
-
-          <Link
-            href="/brags/new"
-            className="grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800 md:hidden"
-            aria-label="Create a brag"
-          >
-            <NavIcon icon="plus" />
-          </Link>
         </div>
       </nav>
 
@@ -149,7 +154,7 @@ export function AppNav({ active = "Home" }: { active?: string }) {
                 <span
                   className={
                     item.primary
-                      ? "grid h-14 w-14 place-items-center rounded-full bg-zinc-950 text-white shadow-lg shadow-zinc-300 transition group-hover:-translate-y-0.5 group-hover:bg-zinc-800"
+                      ? "nav-primary-button grid h-14 w-14 place-items-center rounded-full bg-zinc-950 text-white shadow-lg shadow-zinc-300 transition group-hover:-translate-y-0.5 group-hover:bg-zinc-800"
                       : `grid h-7 w-7 place-items-center rounded-full ${
                           isActive ? "bg-white shadow-sm shadow-zinc-200" : ""
                         }`

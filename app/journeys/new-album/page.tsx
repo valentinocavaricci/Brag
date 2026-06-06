@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppNav } from "../../components/app-nav";
 
 const demos = [
   {
@@ -25,16 +26,17 @@ const demos = [
 
 export default function NewAlbumPage() {
   return (
-    <main className="min-h-screen bg-[#fbfbfb] text-zinc-950">
-      <section className="mx-auto max-w-4xl px-6 py-10">
+    <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
+      <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
+        <AppNav active="Boards" />
         <Link
           href="/tiles/music"
-          className="text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
+          className="mt-5 inline-block text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
         >
           ← Back to Music
         </Link>
 
-        <header className="mt-10 overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
+        <header className="mt-5 overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
           <div
             className="relative flex min-h-72 flex-col justify-end bg-cover bg-center p-7 text-white md:p-9"
             style={{ backgroundImage: "url(/music.png)" }}

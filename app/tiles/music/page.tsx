@@ -3,6 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { BragAttachments } from "../../components/brag-attachments";
+import { AppNav } from "../../components/app-nav";
+import { useBrags } from "../../lib/brags";
 
 const board = {
   name: "Music",
@@ -12,12 +15,6 @@ const board = {
   summary:
     "Demos, writing sessions, rough mixes, and proof that songs are becoming something real.",
 };
-
-const stats = [
-  { label: "Brags", value: "6" },
-  { label: "Journeys", value: "1" },
-  { label: "Pins", value: "173" },
-];
 
 const boardViews = ["Brags", "Journeys"] as const;
 
@@ -33,42 +30,27 @@ const journeys = [
   },
 ];
 
-const recentBrags = [
-  {
-    marker: "Demo 06",
-    title: "Hook finally landed",
-    body: "Rewrote the chorus three times and the last pass actually felt like the song talking back.",
-  },
-  {
-    marker: "Session",
-    title: "Late night guitar layer",
-    body: "Tracked a tiny texture under the second verse. Barely noticeable alone, but the whole thing feels warmer.",
-  },
-  {
-    marker: "Bounce",
-    title: "First rough sequence",
-    body: "Put the demos in an order. It is not an album yet, but now it has a shape.",
-  },
-];
-
 export default function MusicPage() {
   const [activeView, setActiveView] =
     useState<(typeof boardViews)[number]>("Brags");
+  const brags = useBrags();
+  const boardBrags = brags.filter((brag) => brag.board === board.name);
+  const stats = [
+    { label: "Brags", value: String(boardBrags.length) },
+    { label: "Journeys", value: "1" },
+    { label: "Pins", value: "173" },
+  ];
 
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-zinc-950">
-      <section className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6">
-        <nav className="flex items-center justify-between gap-4">
-          <Link href="/" className="text-2xl font-black tracking-tight">
-            BRAG
-          </Link>
-          <Link
-            href="/profile"
-            className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:text-zinc-950"
-          >
-            Back
-          </Link>
-        </nav>
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-6 sm:px-8 lg:px-10">
+        <AppNav active="Boards" />
+        <Link
+          href="/boards"
+          className="w-fit text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
+        >
+          ← Back to Boards
+        </Link>
 
         <header className="overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
           <section className="relative h-56 overflow-hidden sm:h-72">
@@ -146,25 +128,50 @@ export default function MusicPage() {
 
           {activeView === "Brags" ? (
             <div className="space-y-3">
-              {recentBrags.map((brag) => (
+              {boardBrags.map((brag) => (
                 <article
-                  key={brag.title}
-                  className="rounded-[1.25rem] border border-zinc-200 bg-white p-4 transition hover:bg-zinc-50 sm:p-5"
+                  key={brag.id}
+                  className="overflow-hidden rounded-[1.25rem] border border-zinc-200 bg-white transition hover:bg-zinc-50"
                 >
-                  <div className="flex items-start gap-3">
+                  {brag.attachments?.length ? (
+                    <BragAttachments attachments={brag.attachments} />
+                  ) : brag.type === "video" && brag.image ? (
+                    <div className="aspect-[4/3] bg-zinc-950">
+                      <video
+                        src={brag.image}
+                        controls
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : brag.image ? (
+                    <div className="relative aspect-[4/3] bg-zinc-100">
+                      <Image
+                        src={brag.image}
+                        alt={brag.title ?? `${brag.board} brag`}
+                        fill
+                        sizes="(min-width: 640px) 768px, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex items-start gap-3 p-4 sm:p-5">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-950 text-xs font-black text-white">
                       M
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-black">{brag.title}</p>
+                        <p className="font-black">
+                          {brag.title ?? "Proof moment"}
+                        </p>
                         <span className="text-sm font-semibold text-zinc-400">
-                          {brag.marker}
+                          {brag.time}
                         </span>
                       </div>
-                      <p className="mt-3 leading-7 text-zinc-600">
-                        {brag.body}
-                      </p>
+                      {brag.text ? (
+                        <p className="mt-3 leading-7 text-zinc-600">
+                          {brag.text}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </article>

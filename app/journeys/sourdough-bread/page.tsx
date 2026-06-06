@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { AppNav } from "../../components/app-nav";
 
 const brags = [
   {
@@ -24,16 +25,17 @@ const brags = [
 
 export default function SourdoughBreadPage() {
   return (
-    <main className="min-h-screen bg-[#fbfbfb] text-zinc-950">
-      <section className="mx-auto max-w-4xl px-6 py-10">
+    <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
+      <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
+        <AppNav active="Boards" />
         <Link
           href="/tiles/food"
-          className="text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
+          className="mt-5 inline-block text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
         >
           ← Back to Food
         </Link>
 
-        <header className="mt-10 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-9">
+        <header className="mt-5 rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm md:p-9">
           <div className="mb-5 flex flex-wrap gap-2">
             <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold text-zinc-700">
               Food

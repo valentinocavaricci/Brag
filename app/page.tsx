@@ -1,7 +1,12 @@
-import Image from "next/image";
-import { AppNav } from "./components/app-nav";
+"use client";
 
-const posts = [
+import Image from "next/image";
+import Link from "next/link";
+import { AppNav } from "./components/app-nav";
+import { BragAttachments } from "./components/brag-attachments";
+import { type BragPost, useBrags } from "./lib/brags";
+
+const posts: BragPost[] = [
   {
     id: 1,
     author: "Marco",
@@ -193,10 +198,14 @@ const posts = [
   },
 ];
 
-const totalCheers = posts.reduce((total, post) => total + post.cheers, 0);
-const pinnedUpdates = posts.filter((post) => post.source === "Pinned Journey");
-
 export default function Home() {
+  const allPosts = useBrags(posts);
+  const livePosts = allPosts.filter((post) => post.bragToFeed !== false);
+  const totalCheers = livePosts.reduce((total, post) => total + post.cheers, 0);
+  const pinnedUpdates = livePosts.filter(
+    (post) => post.source === "Pinned Journey",
+  );
+
   return (
     <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
@@ -214,7 +223,7 @@ export default function Home() {
             </div>
 
             <div className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-600 shadow-sm shadow-zinc-200">
-              {posts.length} updates
+              {livePosts.length} updates
             </div>
           </div>
         </header>
@@ -226,13 +235,16 @@ export default function Home() {
                 <div className="grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-sm font-black text-white">
                   VC
                 </div>
-                <div className="flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500">
+                <Link
+                  href="/brags/new"
+                  className="flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-700"
+                >
                   What did you accomplish?
-                </div>
+                </Link>
               </div>
             </div>
 
-            {posts.map((post) => (
+            {livePosts.map((post) => (
               <article
                 key={post.id}
                 className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-200"
@@ -276,7 +288,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                {post.type === "photo" && post.image ? (
+                {post.attachments?.length ? (
+                  <BragAttachments attachments={post.attachments} />
+                ) : post.type === "photo" && post.image ? (
                   <div className="relative aspect-[4/3] w-full bg-zinc-100">
                     <Image
                       src={post.image}
@@ -284,6 +298,14 @@ export default function Home() {
                       fill
                       sizes="(min-width: 1024px) 672px, 100vw"
                       className="object-cover"
+                    />
+                  </div>
+                ) : post.type === "video" && post.image ? (
+                  <div className="aspect-[4/3] w-full bg-zinc-950">
+                    <video
+                      src={post.image}
+                      controls
+                      className="h-full w-full object-cover"
                     />
                   </div>
                 ) : (
@@ -294,7 +316,10 @@ export default function Home() {
                   </div>
                 )}
 
-                {post.type === "photo" ? (
+                {(post.attachments?.length ||
+                  post.type === "photo" ||
+                  post.type === "video") &&
+                post.text ? (
                   <p className="px-5 pt-4 text-base font-semibold leading-7 text-zinc-700">
                     {post.text}
                   </p>
@@ -329,7 +354,7 @@ export default function Home() {
               <div className="mt-6 grid gap-4">
                 <div>
                   <p className="text-3xl font-black tracking-tight">
-                    {posts.length}
+                    {livePosts.length}
                   </p>
                   <p className="text-sm font-bold text-zinc-500">
                     brags posted
