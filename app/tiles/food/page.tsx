@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { BragAttachments } from "../../components/brag-attachments";
 import { AppNav } from "../../components/app-nav";
+import { QuickBragLink } from "../../components/quick-brag-link";
 import { useBrags } from "../../lib/brags";
 
 const board = {
@@ -43,7 +44,7 @@ export default function FoodPage() {
 
   return (
     <main className="min-h-screen bg-[#fbfbfb] text-zinc-950">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-6 sm:px-8 lg:px-10">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-5 py-6 sm:px-8 lg:px-10">
         <AppNav active="Boards" />
         <Link
           href="/boards"
@@ -53,7 +54,8 @@ export default function FoodPage() {
         </Link>
 
         <header className="overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
-          <section className="relative h-48 overflow-hidden sm:h-56">
+          <section className="relative h-36 overflow-hidden sm:h-44">
+            <QuickBragLink />
             <Image
               src={board.image}
               alt="Food board cover"
@@ -64,17 +66,17 @@ export default function FoodPage() {
             />
             <div className="absolute inset-x-0 bottom-0 h-3/5 backdrop-blur-[10px] [mask-image:linear-gradient(to_bottom,transparent_0%,black_42%,black_100%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.16)_42%,rgba(0,0,0,0.82)_100%)]" />
-            <div className="relative z-10 flex h-full flex-col justify-end p-5 text-white sm:p-6">
+            <div className="relative z-10 flex h-full flex-col justify-end p-4 text-white sm:p-5">
               <p className="w-fit rounded-full bg-white/18 px-3 py-1 text-sm font-semibold backdrop-blur-md">
                 Brag Board
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+              <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
                 {board.name}
               </h1>
             </div>
           </section>
 
-          <section className="p-5 sm:p-6">
+          <section className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
                 {board.status}
@@ -83,19 +85,19 @@ export default function FoodPage() {
                 {board.mode}
               </span>
             </div>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
               {board.summary}
             </p>
-            <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
+            <div className="mt-3 flex flex-wrap gap-2">
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="border-r border-zinc-200 p-3 text-center last:border-r-0 sm:p-4"
+                  className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm font-semibold text-zinc-500"
                 >
-                  <p className="text-2xl font-black tracking-tight sm:text-3xl">
+                  <p className="font-black text-zinc-950">
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-zinc-500 sm:text-sm">
+                  <p>
                     {stat.label}
                   </p>
                 </div>
@@ -104,7 +106,7 @@ export default function FoodPage() {
           </section>
         </header>
 
-        <section className="rounded-[1.5rem] border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+        <section className="rounded-[1.5rem] border border-zinc-200 bg-white p-4 shadow-sm">
           <div className="mb-4 flex w-full rounded-2xl bg-zinc-100 p-1 sm:w-fit">
             {boardViews.map((view) => {
               const isActive = activeView === view;
@@ -127,7 +129,7 @@ export default function FoodPage() {
           </div>
 
           {activeView === "Brags" ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
               {boardBrags.map((brag) => (
                 <article
                   key={brag.id}
@@ -181,7 +183,7 @@ export default function FoodPage() {
                 <Link
                   key={journey.title}
                   href={journey.href}
-                  className="group block rounded-[1.25rem] border border-zinc-200 bg-white p-4 transition hover:bg-zinc-50 sm:p-5"
+                  className="group block rounded-[1.25rem] border border-zinc-200 bg-white p-4 transition hover:bg-zinc-50"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

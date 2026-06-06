@@ -7,6 +7,7 @@ import { AppNav } from "../components/app-nav";
 import {
   boardCoverBackground,
   type BoardCover,
+  useBoardPreferences,
   useCreatedBoards,
 } from "../lib/boards";
 
@@ -193,6 +194,7 @@ const pinnedJourneys = [
 
 export default function ProfilePage() {
   const createdBoards = useCreatedBoards();
+  const { preferences } = useBoardPreferences();
   const [isCliqueEditorOpen, setIsCliqueEditorOpen] = useState(false);
   const [clique, setClique] = useState(initialClique);
   const [activeProfileView, setActiveProfileView] = useState<"boards" | "pins">(
@@ -203,7 +205,7 @@ export default function ProfilePage() {
       ? { ...stat, value: String(Number(stat.value) + createdBoards.length) }
       : stat,
   );
-  const profileTiles: ProfileTile[] = [
+  const rawProfileTiles: ProfileTile[] = [
     ...createdBoards.map((board) => ({
       name: board.name,
       description:
@@ -218,6 +220,22 @@ export default function ProfilePage() {
     })),
     ...tiles,
   ];
+  const profileTiles = rawProfileTiles
+    .map((tile, index) => {
+      const preference = preferences[tile.name];
+      const description = preference?.description?.trim() || tile.description;
+
+      return {
+        ...tile,
+        name: preference?.title?.trim() || tile.name,
+        description,
+        detail: preference?.description?.trim() || tile.detail,
+        cover: preference?.cover ?? tile.cover,
+        size: preference?.size ?? tile.size,
+        order: preference?.order ?? index,
+      };
+    })
+    .sort((first, second) => first.order - second.order);
 
   function removeFriend(name: string) {
     setClique((currentClique) =>

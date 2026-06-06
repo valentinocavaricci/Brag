@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type BoardSize = "small" | "medium" | "large";
 
@@ -19,6 +19,17 @@ export type CreatedBoard = {
 };
 
 const storageKey = "brag.createdBoards.v1";
+const preferenceStorageKey = "brag.boardPreferences.v1";
+
+export type BoardPreference = {
+  size?: BoardSize;
+  order?: number;
+  title?: string;
+  description?: string;
+  cover?: BoardCover;
+};
+
+export type BoardPreferences = Record<string, BoardPreference>;
 
 function readCreatedBoards() {
   if (typeof window === "undefined") {
@@ -45,6 +56,27 @@ function writeCreatedBoards(boards: CreatedBoard[]) {
     );
   }
 
+  window.dispatchEvent(new Event("boards:updated"));
+}
+
+function readBoardPreferences() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const raw = window.localStorage.getItem(preferenceStorageKey);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object"
+      ? (parsed as BoardPreferences)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeBoardPreferences(preferences: BoardPreferences) {
+  window.localStorage.setItem(preferenceStorageKey, JSON.stringify(preferences));
   window.dispatchEvent(new Event("boards:updated"));
 }
 
@@ -84,6 +116,61 @@ export function useCreatedBoards() {
   }, []);
 
   return useMemo(() => createdBoards, [createdBoards]);
+}
+
+export function useBoardPreferences() {
+  const [preferences, setPreferences] = useState<BoardPreferences>({});
+
+  useEffect(() => {
+    const syncPreferences = () => setPreferences(readBoardPreferences());
+
+    syncPreferences();
+    window.addEventListener("storage", syncPreferences);
+    window.addEventListener("boards:updated", syncPreferences);
+
+    return () => {
+      window.removeEventListener("storage", syncPreferences);
+      window.removeEventListener("boards:updated", syncPreferences);
+    };
+  }, []);
+
+  const updateBoardPreference = useCallback(
+    (name: string, preference: BoardPreference) => {
+      const nextPreferences = {
+        ...readBoardPreferences(),
+        [name]: {
+          ...readBoardPreferences()[name],
+          ...preference,
+        },
+      };
+
+      writeBoardPreferences(nextPreferences);
+      setPreferences(nextPreferences);
+    },
+    [],
+  );
+
+  const setBoardOrder = useCallback((names: string[]) => {
+    const currentPreferences = readBoardPreferences();
+    const nextPreferences = names.reduce<BoardPreferences>(
+      (next, name, index) => ({
+        ...next,
+        [name]: {
+          ...currentPreferences[name],
+          order: index,
+        },
+      }),
+      { ...currentPreferences },
+    );
+
+    writeBoardPreferences(nextPreferences);
+    setPreferences(nextPreferences);
+  }, []);
+
+  return useMemo(
+    () => ({ preferences, updateBoardPreference, setBoardOrder }),
+    [preferences, setBoardOrder, updateBoardPreference],
+  );
 }
 
 export function boardCoverBackground(cover: BoardCover) {
