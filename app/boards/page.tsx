@@ -15,15 +15,15 @@ const boards = [
   {
     name: "Gym",
     count: "12 brags",
-    detail: "No active journey",
+    detail: "No active arc",
     privacy: "Private",
-    href: "#",
+    href: "/tiles/gym",
     color: "bg-[#14532d]",
     size: "large",
   },
   {
     name: "Music",
-    count: "1 journey",
+    count: "1 arc",
     detail: "New Album?? 👀",
     privacy: "Public",
     href: "/tiles/music",
@@ -32,7 +32,7 @@ const boards = [
   },
   {
     name: "Reading",
-    count: "3 journeys",
+    count: "3 arcs",
     detail: "War and Peace, essays, classics",
     privacy: "Public",
     href: "/tiles/reading",
@@ -42,7 +42,7 @@ const boards = [
   {
     name: "Food",
     count: "5 brags",
-    detail: "Sourdough Bread journey",
+    detail: "Sourdough Bread arc",
     privacy: "Public",
     href: "/tiles/food",
     color: "bg-[#9f1239]",
@@ -50,7 +50,7 @@ const boards = [
   },
   {
     name: "Career",
-    count: "2 journeys",
+    count: "2 arcs",
     detail: "Dashboard build, internship search",
     privacy: "Public",
     href: "#",
@@ -363,7 +363,7 @@ export default function BoardsPage() {
                 Your life domains.
               </h1>
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-zinc-600">
-                Boards hold general brags. Add journeys when a board has a
+                Boards hold general brags. Add arcs when a board has a
                 specific goal worth tracking over time.
               </p>
             </div>

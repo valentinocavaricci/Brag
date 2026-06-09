@@ -79,7 +79,8 @@ export default function NewBoardPage() {
   const [solidColor, setSolidColor] = useState("#12345b");
   const [gradientStart, setGradientStart] = useState("#07111f");
   const [gradientEnd, setGradientEnd] = useState("#0f766e");
-  const [gradientAngle, setGradientAngle] = useState("135");
+  const [gradientAngle] = useState("135");
+  const [activeStop, setActiveStop] = useState<"start" | "end">("start");
   const [size, setSize] = useState<BoardSize>("medium");
   const [error, setError] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
@@ -87,7 +88,7 @@ export default function NewBoardPage() {
   const previewTitle = title.trim() || "Board Title";
   const previewDescription =
     description.trim() ||
-    "Describe what kind of progress, proof, and journeys belong here.";
+    "Describe what kind of progress, proof, and arcs belong here.";
   const previewBackground = { backgroundImage: boardCoverBackground(getCover()) };
 
   function getCover(): BoardCover {
@@ -234,67 +235,60 @@ export default function NewBoardPage() {
                   </label>
                 ) : null}
 
-                {coverMode === "color" ? (
-                  <label className="board-input mt-3 flex h-14 cursor-pointer items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-black text-zinc-700">
-                    Pick any color
-                    <input
-                      type="color"
-                      value={solidColor}
-                      onChange={(event) => {
-                        setSolidColor(event.target.value);
-                        setCoverImage("");
-                      }}
-                      className="h-9 w-14 cursor-pointer rounded-lg border-0 bg-transparent p-0"
-                    />
-                  </label>
-                ) : null}
-
-                {coverMode === "gradient" ? (
-                  <>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                      <label className="board-input flex h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-black text-zinc-700">
-                        From
-                        <input
-                          type="color"
-                          value={gradientStart}
-                          onChange={(event) => {
-                            const next = event.target.value;
-                            setGradientStart(next);
-                            setCoverImage("");
-                          }}
-                          className="h-9 w-12 cursor-pointer rounded-lg border-0 bg-transparent p-0"
-                        />
-                      </label>
-                      <label className="board-input flex h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-black text-zinc-700">
-                        To
-                        <input
-                          type="color"
-                          value={gradientEnd}
-                          onChange={(event) => {
-                            const next = event.target.value;
-                            setGradientEnd(next);
-                            setCoverImage("");
-                          }}
-                          className="h-9 w-12 cursor-pointer rounded-lg border-0 bg-transparent p-0"
-                        />
-                      </label>
-                      <label className="board-input flex h-14 items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-black text-zinc-700">
-                        Angle
-                        <input
-                          type="range"
-                          min="0"
-                          max="360"
-                          value={gradientAngle}
-                          onChange={(event) => {
-                            const next = event.target.value;
-                            setGradientAngle(next);
-                            setCoverImage("");
-                          }}
-                          className="min-w-0 flex-1 cursor-pointer"
-                        />
-                      </label>
+                {(coverMode === "color" || coverMode === "gradient") ? (
+                  <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                    {coverMode === "gradient" && (
+                      <div className="mb-4 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveStop("start")}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition ${activeStop === "start" ? "bg-zinc-950 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:ring-zinc-400"}`}
+                        >
+                          <span className="h-4 w-4 rounded-full ring-1 ring-white/20" style={{ background: gradientStart }} />
+                          From
+                        </button>
+                        <div className="h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${gradientStart}, ${gradientEnd})` }} />
+                        <button
+                          type="button"
+                          onClick={() => setActiveStop("end")}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition ${activeStop === "end" ? "bg-zinc-950 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:ring-zinc-400"}`}
+                        >
+                          <span className="h-4 w-4 rounded-full ring-1 ring-white/20" style={{ background: gradientEnd }} />
+                          To
+                        </button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-5 gap-2">
+                      {[
+                        "#09090b", "#3f3f46", "#71717a", "#d4d4d8", "#ffffff",
+                        "#1e3a5f", "#1d4ed8", "#3b82f6", "#0ea5e9", "#06b6d4",
+                        "#14532d", "#15803d", "#22c55e", "#10b981", "#0d9488",
+                        "#7c2d12", "#b91c1c", "#be185d", "#9333ea", "#7c3aed",
+                      ].map((color) => {
+                        const isSelected = coverMode === "color"
+                          ? solidColor === color
+                          : activeStop === "start" ? gradientStart === color : gradientEnd === color;
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              setCoverImage("");
+                              if (coverMode === "color") {
+                                setSolidColor(color);
+                              } else if (activeStop === "start") {
+                                setGradientStart(color);
+                              } else {
+                                setGradientEnd(color);
+                              }
+                            }}
+                            style={{ background: color }}
+                            className={`aspect-square rounded-xl transition hover:scale-105 ${isSelected ? "ring-2 ring-zinc-950 ring-offset-2" : ""}`}
+                          />
+                        );
+                      })}
                     </div>
-                  </>
+                  </div>
                 ) : null}
               </div>
 

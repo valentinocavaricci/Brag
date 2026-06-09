@@ -10,13 +10,7 @@ import {
   useBoardPreferences,
   useCreatedBoards,
 } from "../lib/boards";
-
-const stats = [
-  { label: "Boards", value: "8" },
-  { label: "Journeys", value: "9" },
-  { label: "Brags", value: "24" },
-  { label: "Pins", value: "672" },
-];
+import { useCreatedBrags, boardHref } from "../lib/brags";
 
 const initialClique = [
   { name: "Marco", avatar: "/guy1.png" },
@@ -38,7 +32,7 @@ const tiles = [
   {
     name: "Gym",
     description: "Strength, consistency, and milestones from training days.",
-    href: "#",
+    href: "/tiles/gym",
     count: "12 brags",
     detail: "general progress",
     pins: "128 pins",
@@ -50,7 +44,7 @@ const tiles = [
     name: "Music",
     description: "Demos, writing sessions, sound experiments, and album proof.",
     href: "/tiles/music",
-    count: "1 journey",
+    count: "1 arc",
     detail: "New Album?? 👀",
     pins: "173 pins",
     privacy: "Public",
@@ -59,9 +53,9 @@ const tiles = [
   },
   {
     name: "Reading",
-    description: "Books, reflections, and long-form reading journeys.",
+    description: "Books, reflections, and long-form reading arcs.",
     href: "/tiles/reading",
-    count: "3 journeys",
+    count: "3 arcs",
     detail: "War and Peace, essays, classics",
     pins: "214 pins",
     privacy: "Public",
@@ -73,7 +67,7 @@ const tiles = [
     description: "Cooking reps, meals worth remembering, and bread experiments.",
     href: "/tiles/food",
     count: "5 brags",
-    detail: "Sourdough Bread journey",
+    detail: "Sourdough Bread arc",
     pins: "87 pins",
     privacy: "Public",
     image: "/food.png",
@@ -83,7 +77,7 @@ const tiles = [
     name: "Career",
     description: "Projects, work wins, lessons, and professional growth.",
     href: "#",
-    count: "2 journeys",
+    count: "2 arcs",
     detail: "dashboard build, internship search",
     pins: "96 pins",
     privacy: "Public",
@@ -162,7 +156,7 @@ const profileBoardSizes = {
   },
 } as const;
 
-const pinnedJourneys = [
+const pinnedArcs = [
   {
     owner: "Sarah",
     location: "Massachusetts",
@@ -194,23 +188,25 @@ const pinnedJourneys = [
 
 export default function ProfilePage() {
   const createdBoards = useCreatedBoards();
+  const createdBrags = useCreatedBrags();
   const { preferences } = useBoardPreferences();
   const [isCliqueEditorOpen, setIsCliqueEditorOpen] = useState(false);
   const [clique, setClique] = useState(initialClique);
   const [activeProfileView, setActiveProfileView] = useState<"boards" | "pins">(
     "boards",
   );
-  const profileStats = stats.map((stat) =>
-    stat.label === "Boards"
-      ? { ...stat, value: String(Number(stat.value) + createdBoards.length) }
-      : stat,
-  );
+  const profileStats = [
+    { label: "Boards", value: String(8 + createdBoards.length) },
+    { label: "Arcs", value: "9" },
+    { label: "Brags", value: String(2 + createdBrags.length) },
+    { label: "Pins", value: "672" },
+  ];
   const rawProfileTiles: ProfileTile[] = [
     ...createdBoards.map((board) => ({
       name: board.name,
       description:
         board.description || "A new place to collect progress and proof.",
-      href: "#",
+      href: boardHref(board.name),
       count: "0 brags",
       detail: "new board",
       pins: "0 pins",
@@ -599,7 +595,7 @@ export default function ProfilePage() {
                 }`}
                 aria-hidden={activeProfileView !== "pins"}
               >
-              {pinnedJourneys.map((pin) => (
+              {pinnedArcs.map((pin) => (
                 <article
                   key={pin.title}
                   className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm shadow-zinc-200"

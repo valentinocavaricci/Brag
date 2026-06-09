@@ -10,19 +10,19 @@ import { useBrags } from "../../lib/brags";
 
 const board = {
   name: "Food",
-  mode: "General brags + journey",
+  mode: "General brags + arc",
   status: "Public Board",
   image: "/food.png",
   summary:
     "Cooking reps, meals worth remembering, and the little proof moments that make a kitchen feel less random.",
 };
 
-const boardViews = ["Brags", "Journeys"] as const;
+const boardViews = ["Brags", "Arcs"] as const;
 
-const journeys = [
+const arcs = [
   {
     title: "Sourdough Bread",
-    href: "/journeys/sourdough-bread",
+    href: "/arcs/sourdough-bread",
     status: "Active",
     progress: "3 brags",
     description:
@@ -38,7 +38,7 @@ export default function FoodPage() {
   const boardBrags = brags.filter((brag) => brag.board === board.name);
   const stats = [
     { label: "Brags", value: String(boardBrags.length) },
-    { label: "Journeys", value: "1" },
+    { label: "Arcs", value: "1" },
     { label: "Pins", value: "87" },
   ];
 
@@ -179,27 +179,27 @@ export default function FoodPage() {
             </div>
           ) : (
             <div className="grid gap-3">
-              {journeys.map((journey) => (
+              {arcs.map((arc) => (
                 <Link
-                  key={journey.title}
-                  href={journey.href}
+                  key={arc.title}
+                  href={arc.href}
                   className="group block rounded-[1.25rem] border border-zinc-200 bg-white p-4 transition hover:bg-zinc-50"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-600">
-                          {journey.status}
+                          {arc.status}
                         </span>
                         <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                          {journey.progress}
+                          {arc.progress}
                         </span>
                       </div>
                       <h3 className="mt-4 text-2xl font-black tracking-tight">
-                        {journey.title}
+                        {arc.title}
                       </h3>
                       <p className="mt-2 max-w-2xl leading-7 text-zinc-600">
-                        {journey.description}
+                        {arc.description}
                       </p>
                     </div>
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-950 text-lg font-semibold text-white transition group-hover:translate-x-1">
@@ -207,7 +207,7 @@ export default function FoodPage() {
                     </span>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {journey.meta.map((item) => (
+                    {arc.meta.map((item) => (
                       <span
                         key={item}
                         className="rounded-full border border-zinc-200 px-3 py-1 text-sm font-semibold text-zinc-500"

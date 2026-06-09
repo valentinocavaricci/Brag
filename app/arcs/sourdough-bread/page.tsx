@@ -41,14 +41,14 @@ export default function SourdoughBreadPage() {
               Food
             </span>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-              Active journey
+              Active arc
             </span>
           </div>
           <h1 className="text-5xl font-black leading-tight tracking-tight md:text-6xl">
             Sourdough Bread
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-600">
-            A small but specific journey for starter care, fermentation, crust,
+            A small but specific arc for starter care, fermentation, crust,
             and proof that each loaf teaches the next one.
           </p>
         </header>

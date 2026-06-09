@@ -12,7 +12,7 @@ import {
 } from "../../lib/brags";
 import { boardCoverBackground, useCreatedBoards } from "../../lib/boards";
 
-const steps = ["Write", "Media", "Board", "Journey", "Review"];
+const steps = ["Write", "Media", "Board", "Arc", "Review"];
 const boardDetails: Record<string, string> = {
   Gym: "Training, movement, and strength",
   Music: "Songs, demos, and practice",
@@ -33,7 +33,7 @@ const boardImages: Record<string, string> = {
   Knitting: "/knitting.png",
   Singing: "/singing.png",
 };
-const existingJourneys = [
+const existingArcs = [
   { name: "New Album??", board: "Music" },
   { name: "Sourdough Bread", board: "Food" },
   { name: "War and Peace", board: "Reading" },
@@ -70,11 +70,11 @@ export default function NewBragPage() {
   const [boardMode, setBoardMode] = useState<"existing" | "new">("existing");
   const [board, setBoard] = useState(boardOptions[0]);
   const [newBoard, setNewBoard] = useState("");
-  const [journeyMode, setJourneyMode] = useState<"none" | "existing" | "new">(
+  const [arcMode, setArcMode] = useState<"none" | "existing" | "new">(
     "none",
   );
-  const [journey, setJourney] = useState(existingJourneys[3].name);
-  const [newJourney, setNewJourney] = useState("");
+  const [arc, setArc] = useState(existingArcs[3].name);
+  const [newArc, setNewArc] = useState("");
   const [visibility, setVisibility] = useState("Public");
   const [bragToFeed, setBragToFeed] = useState(true);
   const [isLaunching, setIsLaunching] = useState(false);
@@ -100,20 +100,20 @@ export default function NewBragPage() {
     return board;
   }, [board, boardMode, newBoard]);
 
-  const destinationJourney = useMemo(() => {
-    if (journeyMode === "new") {
-      return newJourney.trim();
+  const destinationArc = useMemo(() => {
+    if (arcMode === "new") {
+      return newArc.trim();
     }
 
-    if (journeyMode === "existing") {
-      return journey;
+    if (arcMode === "existing") {
+      return arc;
     }
 
     return "";
-  }, [journey, journeyMode, newJourney]);
-  const matchingJourneys = useMemo(
+  }, [arc, arcMode, newArc]);
+  const matchingArcs = useMemo(
     () =>
-      existingJourneys.filter((option) => option.board === destinationBoard),
+      existingArcs.filter((option) => option.board === destinationBoard),
     [destinationBoard],
   );
 
@@ -133,13 +133,13 @@ export default function NewBragPage() {
       return;
     }
 
-    if (step === 3 && journeyMode === "new" && !destinationJourney) {
-      setError("Name the new journey, or choose no journey.");
+    if (step === 3 && arcMode === "new" && !destinationArc) {
+      setError("Name the new arc, or choose no arc.");
       return;
     }
 
-    if (step === 3 && journeyMode === "existing" && !destinationJourney) {
-      setError("Choose a journey, or choose no journey.");
+    if (step === 3 && arcMode === "existing" && !destinationArc) {
+      setError("Choose a arc, or choose no arc.");
       return;
     }
 
@@ -206,9 +206,9 @@ export default function NewBragPage() {
       return;
     }
 
-    if (journeyMode !== "none" && !destinationJourney) {
+    if (arcMode !== "none" && !destinationArc) {
       setStep(3);
-      setError("Finish choosing the journey.");
+      setError("Finish choosing the arc.");
       return;
     }
 
@@ -223,7 +223,7 @@ export default function NewBragPage() {
         board: destinationBoard,
         visibility,
         attachments,
-        journey: destinationJourney || undefined,
+        arc: destinationArc || undefined,
         bragToFeed,
       });
 
@@ -468,7 +468,7 @@ export default function NewBragPage() {
                           type="button"
                           onClick={() => {
                             setBoardMode(mode);
-                            setJourneyMode("none");
+                            setArcMode("none");
                             setError("");
                           }}
                           className={`min-h-10 rounded-xl text-sm font-black transition ${
@@ -497,7 +497,7 @@ export default function NewBragPage() {
                               type="button"
                               onClick={() => {
                                 setBoard(option);
-                                setJourneyMode("none");
+                                setArcMode("none");
                                 setError("");
                               }}
                               className={`relative aspect-[4/3] overflow-hidden rounded-2xl border text-left transition ${
@@ -539,7 +539,7 @@ export default function NewBragPage() {
                           value={newBoard}
                           onChange={(event) => {
                             setNewBoard(event.target.value);
-                            setJourneyMode("none");
+                            setArcMode("none");
                             setError("");
                           }}
                           className="mt-3 h-12 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm font-bold outline-none transition focus:border-zinc-950"
@@ -554,7 +554,7 @@ export default function NewBragPage() {
                     style={{ width: `${100 / steps.length}%` }}
                   >
                     <p className="text-xl font-black tracking-tight">
-                      Add it to a journey?
+                      Add it to a arc?
                     </p>
                     <p className="mt-1 text-sm font-semibold text-zinc-500">
                       Optional. This brag is already going to {destinationBoard}.
@@ -564,16 +564,16 @@ export default function NewBragPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setJourneyMode("none");
+                          setArcMode("none");
                           setError("");
                         }}
                         className={`relative min-h-24 rounded-2xl border p-4 text-left transition ${
-                          journeyMode === "none"
+                          arcMode === "none"
                             ? "border-zinc-950 bg-zinc-950 text-white ring-2 ring-zinc-950"
                             : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
                         }`}
                       >
-                        {journeyMode === "none" ? (
+                        {arcMode === "none" ? (
                           <span className="absolute right-3 top-3">
                             <SelectionMark />
                           </span>
@@ -583,7 +583,7 @@ export default function NewBragPage() {
                         </span>
                         <span
                           className={`mt-1 block text-xs font-semibold ${
-                            journeyMode === "none"
+                            arcMode === "none"
                               ? "text-white/65"
                               : "text-zinc-500"
                           }`}
@@ -592,18 +592,18 @@ export default function NewBragPage() {
                         </span>
                       </button>
 
-                      {matchingJourneys.map((option) => {
+                      {matchingArcs.map((option) => {
                         const selected =
-                          journeyMode === "existing" &&
-                          journey === option.name;
+                          arcMode === "existing" &&
+                          arc === option.name;
 
                         return (
                           <button
                             key={option.name}
                             type="button"
                             onClick={() => {
-                              setJourneyMode("existing");
-                              setJourney(option.name);
+                              setArcMode("existing");
+                              setArc(option.name);
                               setError("");
                             }}
                             className={`relative min-h-24 overflow-hidden rounded-2xl border text-left transition ${
@@ -629,7 +629,7 @@ export default function NewBragPage() {
                                 {option.name}
                               </span>
                               <span className="mt-1 text-xs font-semibold text-white/65">
-                                Existing journey
+                                Existing arc
                               </span>
                             </span>
                           </button>
@@ -639,26 +639,26 @@ export default function NewBragPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setJourneyMode("new");
+                          setArcMode("new");
                           setError("");
                         }}
                         className={`relative min-h-24 rounded-2xl border p-4 text-left transition ${
-                          journeyMode === "new"
+                          arcMode === "new"
                             ? "border-zinc-950 bg-zinc-950 text-white ring-2 ring-zinc-950"
                             : "border-zinc-200 bg-zinc-50 hover:border-zinc-400"
                         }`}
                       >
-                        {journeyMode === "new" ? (
+                        {arcMode === "new" ? (
                           <span className="absolute right-3 top-3">
                             <SelectionMark />
                           </span>
                         ) : null}
                         <span className="block text-sm font-black">
-                          Start a new journey
+                          Start a new arc
                         </span>
                         <span
                           className={`mt-1 block text-xs font-semibold ${
-                            journeyMode === "new"
+                            arcMode === "new"
                               ? "text-white/65"
                               : "text-zinc-500"
                           }`}
@@ -668,15 +668,15 @@ export default function NewBragPage() {
                       </button>
                     </div>
 
-                    {journeyMode === "new" ? (
+                    {arcMode === "new" ? (
                       <input
-                        value={newJourney}
+                        value={newArc}
                         onChange={(event) => {
-                          setNewJourney(event.target.value);
+                          setNewArc(event.target.value);
                           setError("");
                         }}
                         className="mt-3 h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-bold outline-none transition focus:border-zinc-950 focus:bg-white"
-                        placeholder="Journey name"
+                        placeholder="Arc name"
                       />
                     ) : null}
                   </section>
@@ -760,9 +760,9 @@ export default function NewBragPage() {
                             <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-600">
                               {destinationBoard || "No board"}
                             </span>
-                            {destinationJourney ? (
+                            {destinationArc ? (
                               <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-600">
-                                {destinationJourney}
+                                {destinationArc}
                               </span>
                             ) : null}
                           </div>
@@ -777,7 +777,7 @@ export default function NewBragPage() {
                           <span className="mt-0.5 block text-xs font-semibold text-zinc-500">
                             {bragToFeed
                               ? "Your clique can see this update."
-                              : "Save only to its board or journey."}
+                              : "Save only to its board or arc."}
                           </span>
                         </span>
                         <button

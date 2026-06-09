@@ -37,7 +37,7 @@ export default function WarAndPeacePage() {
               Reading
             </span>
             <span className="rounded-full bg-gray-200 px-3 py-1 text-sm text-gray-700">
-              Completed journey
+              Completed arc
             </span>
           </div>
 
@@ -46,14 +46,14 @@ export default function WarAndPeacePage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-xl leading-8 text-gray-600">
-            A scrollable BRAG journey showing the full arc from starting the book
+            A scrollable BRAG arc showing the full arc from starting the book
             to finishing it.
           </p>
         </header>
 
         <section className="mt-10">
           <div className="mb-6">
-            <h2 className="text-3xl font-bold">Journey Timeline</h2>
+            <h2 className="text-3xl font-bold">Arc Timeline</h2>
             <p className="mt-2 text-gray-500">
               Each card is a brag: a moment of progress worth remembering.
             </p>

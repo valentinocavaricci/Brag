@@ -136,10 +136,11 @@ export function useBoardPreferences() {
 
   const updateBoardPreference = useCallback(
     (name: string, preference: BoardPreference) => {
+      const current = readBoardPreferences();
       const nextPreferences = {
-        ...readBoardPreferences(),
+        ...current,
         [name]: {
-          ...readBoardPreferences()[name],
+          ...current[name],
           ...preference,
         },
       };
