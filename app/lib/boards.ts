@@ -99,6 +99,11 @@ export function createBoard(input: {
   return board;
 }
 
+export function deleteBoard(id: string) {
+  const next = readCreatedBoards().filter((b) => b.id !== id);
+  writeCreatedBoards(next);
+}
+
 export function useCreatedBoards() {
   const [createdBoards, setCreatedBoards] = useState<CreatedBoard[]>([]);
 

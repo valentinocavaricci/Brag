@@ -6,40 +6,13 @@ import { AppNav } from "../../components/app-nav";
 import { BackButton } from "../../components/back-button";
 import {
   boardHref,
-  boardOptions,
   type BragAttachment,
   createBrag,
+  useCreatedBrags,
 } from "../../lib/brags";
 import { boardCoverBackground, useCreatedBoards } from "../../lib/boards";
 
 const steps = ["Write", "Media", "Board", "Arc", "Review"];
-const boardDetails: Record<string, string> = {
-  Gym: "Training, movement, and strength",
-  Music: "Songs, demos, and practice",
-  Food: "Cooking, baking, and meals",
-  Reading: "Books, notes, and reflections",
-  Career: "Work, projects, and learning",
-  Faith: "Reflection, gratitude, and practice",
-  Knitting: "Patterns, stitches, and finished pieces",
-  Singing: "Voice practice, covers, and performances",
-};
-const boardImages: Record<string, string> = {
-  Gym: "/gym.jpg",
-  Music: "/music.png",
-  Food: "/food.png",
-  Reading: "/reading.jpg",
-  Career: "/career.jpg",
-  Faith: "/headshot.jpg",
-  Knitting: "/knitting.png",
-  Singing: "/singing.png",
-};
-const existingArcs = [
-  { name: "New Album??", board: "Music" },
-  { name: "Sourdough Bread", board: "Food" },
-  { name: "War and Peace", board: "Reading" },
-  { name: "Ironman Training", board: "Gym" },
-  { name: "LSAT 170 Push", board: "Career" },
-];
 
 function SelectionMark() {
   return (
@@ -63,17 +36,16 @@ function SelectionMark() {
 export default function NewBragPage() {
   const router = useRouter();
   const createdBoards = useCreatedBoards();
+  const createdBrags = useCreatedBrags();
   const [step, setStep] = useState(0);
   const [furthestStep, setFurthestStep] = useState(0);
   const [text, setText] = useState("");
   const [confirmNoText, setConfirmNoText] = useState(false);
   const [boardMode, setBoardMode] = useState<"existing" | "new">("existing");
-  const [board, setBoard] = useState(boardOptions[0]);
+  const [board, setBoard] = useState("");
   const [newBoard, setNewBoard] = useState("");
-  const [arcMode, setArcMode] = useState<"none" | "existing" | "new">(
-    "none",
-  );
-  const [arc, setArc] = useState(existingArcs[3].name);
+  const [arcMode, setArcMode] = useState<"none" | "existing" | "new">("none");
+  const [arc, setArc] = useState("");
   const [newArc, setNewArc] = useState("");
   const [visibility, setVisibility] = useState("Public");
   const [bragToFeed, setBragToFeed] = useState(true);
@@ -85,11 +57,8 @@ export default function NewBragPage() {
     [createdBoards],
   );
   const allBoardOptions = useMemo(
-    () => [
-      ...createdBoards.map((createdBoard) => createdBoard.name),
-      ...boardOptions.filter((option) => !createdBoardByName.has(option)),
-    ],
-    [createdBoardByName, createdBoards],
+    () => createdBoards.map((createdBoard) => createdBoard.name),
+    [createdBoards],
   );
 
   const destinationBoard = useMemo(() => {
@@ -112,9 +81,14 @@ export default function NewBragPage() {
     return "";
   }, [arc, arcMode, newArc]);
   const matchingArcs = useMemo(
-    () =>
-      existingArcs.filter((option) => option.board === destinationBoard),
-    [destinationBoard],
+    () => [
+      ...new Set(
+        createdBrags
+          .filter((b) => b.board === destinationBoard && b.arc)
+          .map((b) => b.arc as string),
+      ),
+    ],
+    [createdBrags, destinationBoard],
   );
 
   function goNext() {
@@ -483,13 +457,21 @@ export default function NewBragPage() {
                     </div>
 
                     {boardMode === "existing" ? (
+                      allBoardOptions.length === 0 ? (
+                        <div className="mt-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-8 text-center">
+                          <p className="text-sm font-black text-zinc-950">No boards yet.</p>
+                          <p className="mt-1 text-xs font-semibold text-zinc-500">
+                            Use &ldquo;Create new&rdquo; above to start a board with this brag.
+                          </p>
+                        </div>
+                      ) : (
                       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {allBoardOptions.map((option) => {
                           const selected = board === option;
                           const createdBoard = createdBoardByName.get(option);
                           const backgroundImage = createdBoard
                             ? boardCoverBackground(createdBoard.cover)
-                            : `url(${boardImages[option]})`;
+                            : undefined;
 
                           return (
                             <button
@@ -507,10 +489,8 @@ export default function NewBragPage() {
                               }`}
                             >
                               <span
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{
-                                  backgroundImage,
-                                }}
+                                className="absolute inset-0 bg-zinc-900 bg-cover bg-center"
+                                style={backgroundImage ? { backgroundImage } : undefined}
                               />
                               <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_20%,rgba(0,0,0,0.82)_100%)]" />
                               {selected ? (
@@ -523,15 +503,14 @@ export default function NewBragPage() {
                                   {option}
                                 </span>
                                 <span className="mt-0.5 block truncate text-[0.68rem] font-semibold text-white/70">
-                                  {createdBoard?.description ||
-                                    boardDetails[option] ||
-                                    "Progress and proof"}
+                                  {createdBoard?.description || "Progress and proof"}
                                 </span>
                               </span>
                             </button>
                           );
                         })}
                       </div>
+                      )
                     ) : (
                       <label className="mt-3 block rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm font-black text-zinc-700">
                         Start a new board with this brag
@@ -592,42 +571,30 @@ export default function NewBragPage() {
                         </span>
                       </button>
 
-                      {matchingArcs.map((option) => {
-                        const selected =
-                          arcMode === "existing" &&
-                          arc === option.name;
-
+                      {matchingArcs.map((arcName) => {
+                        const selected = arcMode === "existing" && arc === arcName;
                         return (
                           <button
-                            key={option.name}
+                            key={arcName}
                             type="button"
                             onClick={() => {
                               setArcMode("existing");
-                              setArc(option.name);
+                              setArc(arcName);
                               setError("");
                             }}
-                            className={`relative min-h-24 overflow-hidden rounded-2xl border text-left transition ${
+                            className={`relative min-h-24 overflow-hidden rounded-2xl border bg-zinc-900 text-left transition ${
                               selected
                                 ? "border-zinc-950 ring-2 ring-zinc-950"
                                 : "border-zinc-200 hover:border-zinc-400"
                             }`}
                           >
-                            <span
-                              className="absolute inset-0 bg-cover bg-center"
-                              style={{
-                                backgroundImage: `url(${boardImages[option.board]})`,
-                              }}
-                            />
-                            <span className="absolute inset-0 bg-black/60" />
                             {selected ? (
                               <span className="absolute right-3 top-3">
                                 <SelectionMark />
                               </span>
                             ) : null}
                             <span className="relative flex min-h-24 flex-col justify-end p-4 text-white">
-                              <span className="text-sm font-black">
-                                {option.name}
-                              </span>
+                              <span className="text-sm font-black">{arcName}</span>
                               <span className="mt-1 text-xs font-semibold text-white/65">
                                 Existing arc
                               </span>

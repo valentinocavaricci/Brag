@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { type ChangeEvent } from "react";
 import { AppNav } from "./components/app-nav";
+import { CommentsSheet } from "./components/comments-sheet";
 import { BragAttachments } from "./components/brag-attachments";
-import { boardOptions, createBrag, type BragAttachment, useBrags, useCheers, usePinnedBoards, formatBragDate } from "./lib/brags";
+import { createBrag, deleteBrag, type BragAttachment, useBrags, useCheers, usePinnedBoards, formatBragDate } from "./lib/brags";
+import { bragPrompts } from "./lib/prompts";
 import { useCreatedBoards } from "./lib/boards";
 
 function compressImage(file: File) {
@@ -54,21 +56,34 @@ export default function Home() {
         ? livePosts.filter((p) => p.source === "Pinned Arc" || pinnedBoards.has(p.board))
         : livePosts;
 
-  const allBoardOptions = [
-    ...createdBoards.map((b) => b.name),
-    ...boardOptions.filter((b) => !createdBoards.some((cb) => cb.name === b)),
-  ];
+  const allBoardOptions = createdBoards.map((b) => b.name);
 
   const [quickBragOpen, setQuickBragOpen] = useState(false);
   const [quickBragText, setQuickBragText] = useState("");
-  const [quickBragBoard, setQuickBragBoard] = useState(
-    () => allBoardOptions[0] ?? boardOptions[0],
-  );
+  const [quickBragBoard, setQuickBragBoard] = useState("");
   const [quickBragImage, setQuickBragImage] = useState("");
   const [quickBragImageLoading, setQuickBragImageLoading] = useState(false);
   const [quickBragImageError, setQuickBragImageError] = useState("");
   const [quickBragPosting, setQuickBragPosting] = useState(false);
   const { cheeredIds, toggleCheer } = useCheers();
+  const [promptIndex, setPromptIndex] = useState(0);
+  const [commentPost, setCommentPost] = useState<(typeof livePosts)[0] | null>(null);
+  const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPromptIndex(Math.floor(Math.random() * bragPrompts.length));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!feedDropdownOpen) return;
+    function close() { setFeedDropdownOpen(false); }
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [feedDropdownOpen]);
   const [toastBoard, setToastBoard] = useState("");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
@@ -81,7 +96,7 @@ export default function Home() {
 
   function openQuickBrag() {
     setQuickBragText("");
-    setQuickBragBoard(allBoardOptions[0] ?? boardOptions[0]);
+    setQuickBragBoard(allBoardOptions[0] ?? "");
     setQuickBragImage("");
     setQuickBragImageError("");
     setQuickBragOpen(true);
@@ -133,50 +148,69 @@ export default function Home() {
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Home
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
-                Progress Feed
-              </h1>
+              <div className="relative mt-3">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setFeedDropdownOpen((v) => !v); }}
+                  className="flex items-center gap-2 text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl"
+                >
+                  {feedView}
+                  <svg
+                    className={`mt-1 h-6 w-6 shrink-0 transition-transform sm:h-7 sm:w-7 ${feedDropdownOpen ? "rotate-180" : ""}`}
+                    fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {feedDropdownOpen && (
+                  <div className="absolute left-0 top-full z-30 mt-2 min-w-48 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-950/10">
+                    {feedViews.map((view) => (
+                      <button
+                        key={view}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setFeedView(view); setFeedDropdownOpen(false); }}
+                        className={`flex w-full items-center justify-between px-5 py-3.5 text-left text-sm font-black transition hover:bg-zinc-50 ${feedView === view ? "text-zinc-950" : "text-zinc-500"}`}
+                      >
+                        {view}
+                        {feedView === view && (
+                          <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" fill="none"/></svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-600 shadow-sm shadow-zinc-200">
-              {livePosts.length} updates
-            </div>
           </div>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,42rem)_1fr] lg:px-10">
-          <div className="flex flex-col gap-5">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-200">
-              <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-sm font-black text-white">
-                  VC
-                </div>
-                <button
-                  type="button"
-                  onClick={openQuickBrag}
-                  className="flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-500 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-700"
-                >
-                  What did you accomplish?
-                </button>
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Quick Brag
+            </p>
+            <button
+              type="button"
+              onClick={openQuickBrag}
+              className="flex w-full items-center gap-3 rounded-full border border-zinc-200 bg-white py-2 pl-2 pr-6 text-left shadow-sm shadow-zinc-200 transition hover:border-zinc-300 hover:shadow-md"
+            >
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+                <Image
+                  src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
+                  alt="Your profile photo"
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
               </div>
-            </div>
+              <span className="text-sm font-normal text-zinc-300">
+                {bragPrompts[promptIndex]}
+              </span>
+            </button>
 
-            <div className="flex w-full rounded-2xl bg-zinc-100 p-1 sm:w-fit">
-              {feedViews.map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={() => setFeedView(view)}
-                  className={`min-h-10 flex-1 rounded-xl px-4 text-sm font-black transition sm:min-w-32 ${
-                    feedView === view
-                      ? "bg-white text-zinc-950 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-950"
-                  }`}
-                >
-                  {view}
-                </button>
-              ))}
-            </div>
+
+
 
             {filteredPosts.map((post) => (
               <article
@@ -259,7 +293,7 @@ export default function Home() {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); deleteBrag(post.id); setOpenMenuId(null); }}
                             className="flex w-full items-center border-t border-zinc-100 px-4 py-3 text-sm font-black text-red-500 transition hover:bg-red-50"
                           >
                             Delete
@@ -321,6 +355,7 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => setCommentPost(post)}
                     className="rounded-full bg-zinc-100 px-4 py-2 transition hover:bg-zinc-950 hover:text-white"
                   >
                     Comment {post.comments}
@@ -336,20 +371,33 @@ export default function Home() {
                     ? "Nothing pinned yet."
                     : feedView === "My Clique"
                       ? "Your clique is quiet right now."
-                      : "Nothing posted yet."}
+                      : allBoardOptions.length === 0
+                        ? "No boards yet."
+                        : "Nothing posted yet."}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-zinc-500">
                   {feedView === "My Pins"
-                    ? "Pin a board or arc from someone's post to follow just that slice of their life."
-                    : "Be the first to post something."}
+                    ? "Pin a board from someone's post to follow their progress."
+                    : allBoardOptions.length === 0
+                      ? "Create a board first, then start logging your proof."
+                      : "Be the first to post something."}
                 </p>
-                <button
-                  type="button"
-                  onClick={openQuickBrag}
-                  className="mt-5 inline-flex h-11 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800"
-                >
-                  Post a brag
-                </button>
+                {allBoardOptions.length === 0 ? (
+                  <Link
+                    href="/boards/new"
+                    className="mt-5 inline-flex h-11 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                  >
+                    Create a board
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={openQuickBrag}
+                    className="mt-5 inline-flex h-11 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                  >
+                    Post a brag
+                  </button>
+                )}
               </div>
             ) : null}
           </div>
@@ -433,11 +481,14 @@ export default function Home() {
 
             <div className="mt-3">
               {quickBragImage ? (
-                <div className="relative overflow-hidden rounded-2xl bg-zinc-100">
-                  <img
+                <div className="relative h-52 overflow-hidden rounded-2xl bg-zinc-100">
+                  <Image
                     src={quickBragImage}
                     alt="Selected"
-                    className="max-h-52 w-full object-cover"
+                    fill
+                    sizes="(min-width: 640px) 36rem, calc(100vw - 2.5rem)"
+                    className="object-cover"
+                    unoptimized
                   />
                   <button
                     type="button"
@@ -471,29 +522,37 @@ export default function Home() {
 
             <div className="mt-4">
               <p className="text-sm font-black text-zinc-700">Board</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {allBoardOptions.map((board) => (
-                  <button
-                    key={board}
-                    type="button"
-                    onClick={() => setQuickBragBoard(board)}
-                    className={`rounded-full px-4 py-2 text-sm font-black transition ${
-                      quickBragBoard === board
-                        ? "bg-zinc-950 text-white"
-                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
-                    }`}
-                  >
-                    {board}
-                  </button>
-                ))}
-              </div>
+              {allBoardOptions.length === 0 ? (
+                <p className="mt-2 text-sm font-semibold text-zinc-500">
+                  <Link href="/boards/new" className="font-black text-zinc-950 underline underline-offset-2" onClick={() => setQuickBragOpen(false)}>
+                    Create a board
+                  </Link>{" "}first to start logging brags.
+                </p>
+              ) : (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {allBoardOptions.map((board) => (
+                    <button
+                      key={board}
+                      type="button"
+                      onClick={() => setQuickBragBoard(board)}
+                      className={`rounded-full px-4 py-2 text-sm font-black transition ${
+                        quickBragBoard === board
+                          ? "bg-zinc-950 text-white"
+                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                      }`}
+                    >
+                      {board}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-5 flex items-center gap-3 border-t border-zinc-100 pt-5">
               <button
                 type="button"
                 onClick={handleQuickBrag}
-                disabled={!quickBragText.trim() || quickBragPosting}
+                disabled={!quickBragText.trim() || quickBragPosting || !quickBragBoard}
                 className="quick-brag-btn h-12 flex-1 rounded-full px-5 text-sm font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               >
                 <span className="quick-brag-idle-shimmer" aria-hidden="true" />
@@ -520,6 +579,7 @@ export default function Home() {
           </div>
         </div>
       ) : null}
+      <CommentsSheet post={commentPost} onClose={() => setCommentPost(null)} />
     </main>
   );
 }

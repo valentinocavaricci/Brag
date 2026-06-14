@@ -5,7 +5,7 @@ const navItems = [
   { label: "Home", href: "/", icon: "home" },
   { label: "Explore", href: "/explore", icon: "compass" },
   { label: "Brag", href: "/brags/new", icon: "plus", primary: true },
-  { label: "Messages", href: "/messages", icon: "message" },
+  { label: "Alerts", href: "/notifications", icon: "bell" },
   { label: "Boards", href: "/boards", icon: "grid" },
   { label: "Profile", href: "/profile", icon: "user" },
 ];
@@ -61,13 +61,11 @@ function NavIcon({ icon }: { icon: string }) {
     );
   }
 
-  if (icon === "message") {
+  if (icon === "bell") {
     return (
       <svg {...commonProps}>
-        <rect x="4" y="5" width="16" height="14" rx="4" />
-        <path d="M8 10h8" />
-        <path d="M8 14h5" />
-        <path d="m9 19-3 3" />
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
     );
   }
@@ -106,7 +104,7 @@ export function AppNav({ active = "Home" }: { active?: string }) {
                     className={
                       item.primary
                         ? "nav-primary-button ml-2 inline-flex h-11 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
-                        : `inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition hover:bg-white hover:text-zinc-950 ${
+                        : `relative inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition hover:bg-white hover:text-zinc-950 ${
                             isActive
                               ? "bg-white text-zinc-950 shadow-sm shadow-zinc-200"
                               : "text-zinc-600"
@@ -115,6 +113,9 @@ export function AppNav({ active = "Home" }: { active?: string }) {
                   >
                     <NavIcon icon={item.icon} />
                     <span>{item.label}</span>
+                    {item.icon === "bell" && (
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+                    )}
                   </Link>
                 );
               })}
@@ -155,12 +156,15 @@ export function AppNav({ active = "Home" }: { active?: string }) {
                   className={
                     item.primary
                       ? "nav-primary-button grid h-14 w-14 place-items-center rounded-full bg-zinc-950 text-white shadow-lg shadow-zinc-300 transition group-hover:-translate-y-0.5 group-hover:bg-zinc-800"
-                      : `grid h-7 w-7 place-items-center rounded-full ${
+                      : `relative grid h-7 w-7 place-items-center rounded-full ${
                           isActive ? "bg-white shadow-sm shadow-zinc-200" : ""
                         }`
                   }
                 >
                   <NavIcon icon={item.icon} />
+                  {item.icon === "bell" && (
+                    <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />
+                  )}
                 </span>
                 <span className="truncate">{item.label}</span>
               </Link>

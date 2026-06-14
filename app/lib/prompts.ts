@@ -1,0 +1,17 @@
+export const bragPrompts = [
+  "come on... brag about something.",
+  "you literally did something today. what was it?",
+  "don't be humble. just this once.",
+  "proof or it didn't happen.",
+  "small win? massive win? doesn't matter. log it.",
+  "brag now, be humble later.",
+  "what are you proud of? nobody's judging.",
+  "your future self wants to remember this.",
+  "you showed up. that counts.",
+  "stop overthinking it. just brag.",
+  "be your own hype person for once.",
+  "this is your receipt. what did you earn?",
+  "something happened today. what was it?",
+  "the bar is on the floor. just step over it.",
+  "one thing. just one thing.",
+];

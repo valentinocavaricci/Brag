@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { AppNav } from "../components/app-nav";
+import { BoardsEmptyState } from "../components/boards-empty-state";
 import {
   boardCoverBackground,
   type BoardCover,
@@ -28,96 +29,6 @@ const initialClique = [
 
 const maxCliqueSize = 15;
 
-const tiles = [
-  {
-    name: "Gym",
-    description: "Strength, consistency, and milestones from training days.",
-    href: "/tiles/gym",
-    count: "12 brags",
-    detail: "general progress",
-    pins: "128 pins",
-    privacy: "Private",
-    image: "/gym.jpg",
-    size: "large",
-  },
-  {
-    name: "Music",
-    description: "Demos, writing sessions, sound experiments, and album proof.",
-    href: "/tiles/music",
-    count: "1 arc",
-    detail: "New Album?? 👀",
-    pins: "173 pins",
-    privacy: "Public",
-    image: "/music.png",
-    size: "medium",
-  },
-  {
-    name: "Reading",
-    description: "Books, reflections, and long-form reading arcs.",
-    href: "/tiles/reading",
-    count: "3 arcs",
-    detail: "War and Peace, essays, classics",
-    pins: "214 pins",
-    privacy: "Public",
-    image: "/reading.jpg",
-    size: "small",
-  },
-  {
-    name: "Food",
-    description: "Cooking reps, meals worth remembering, and bread experiments.",
-    href: "/tiles/food",
-    count: "5 brags",
-    detail: "Sourdough Bread arc",
-    pins: "87 pins",
-    privacy: "Public",
-    image: "/food.png",
-    size: "small",
-  },
-  {
-    name: "Career",
-    description: "Projects, work wins, lessons, and professional growth.",
-    href: "#",
-    count: "2 arcs",
-    detail: "dashboard build, internship search",
-    pins: "96 pins",
-    privacy: "Public",
-    image: "/career.jpg",
-    size: "medium",
-  },
-  {
-    name: "Faith",
-    description: "Practices, gratitude, and spiritual growth.",
-    href: "#",
-    count: "8 brags",
-    detail: "general practice",
-    pins: "55 pins",
-    privacy: "Private",
-    image: null,
-    size: "medium",
-  },
-  {
-    name: "Knitting",
-    description: "Patterns, stitches, cozy experiments, and finished pieces.",
-    href: "#",
-    count: "4 brags",
-    detail: "scarf progress, new stitches",
-    pins: "42 pins",
-    privacy: "Public",
-    image: "/knitting.png",
-    size: "medium",
-  },
-  {
-    name: "Singing",
-    description: "Voice practice, covers, warmups, and performance proof.",
-    href: "#",
-    count: "6 brags",
-    detail: "vocal runs, covers, practice",
-    pins: "64 pins",
-    privacy: "Public",
-    image: "/singing.png",
-    size: "small",
-  },
-] as const;
 
 type ProfileTile = {
   name: string;
@@ -138,53 +49,24 @@ const profileBoardSizes = {
     body: "p-4",
     title: "text-2xl sm:text-3xl",
     description: "line-clamp-2 text-sm leading-5",
-    detail: "line-clamp-1 text-[0.65rem] tracking-[0.14em]",
+    detail: "line-clamp-2 text-[0.65rem] tracking-[0.14em]",
   },
   medium: {
     tile: "col-span-2 row-span-1",
     body: "p-4 sm:p-5",
     title: "text-3xl sm:text-4xl",
     description: "line-clamp-2 text-sm leading-5",
-    detail: "line-clamp-1 text-xs tracking-[0.16em]",
+    detail: "line-clamp-2 text-xs tracking-[0.16em]",
   },
   large: {
     tile: "col-span-2 row-span-2",
     body: "p-5",
     title: "text-4xl sm:text-5xl",
     description: "line-clamp-2 text-sm leading-6 sm:text-base",
-    detail: "line-clamp-1 text-xs tracking-[0.18em]",
+    detail: "line-clamp-2 text-xs tracking-[0.18em]",
   },
 } as const;
 
-const pinnedArcs = [
-  {
-    owner: "Sarah",
-    location: "Massachusetts",
-    title: "Ironman Training",
-    board: "Fitness",
-    progress: "Week 9 of 24",
-    pins: "493 pins",
-    update: "Long swim complete. Bike brick tomorrow.",
-  },
-  {
-    owner: "Owen",
-    location: "Austin",
-    title: "First Cookbook",
-    board: "Cooking",
-    progress: "Recipe 18 of 40",
-    pins: "127 pins",
-    update: "Tested the pasta chapter again and finally nailed the sauce.",
-  },
-  {
-    owner: "Maya",
-    location: "Chicago",
-    title: "LSAT 170 Push",
-    board: "Education",
-    progress: "34 days left",
-    pins: "301 pins",
-    update: "Logic games set came in clean under time.",
-  },
-];
 
 export default function ProfilePage() {
   const createdBoards = useCreatedBoards();
@@ -195,27 +77,24 @@ export default function ProfilePage() {
   const [activeProfileView, setActiveProfileView] = useState<"boards" | "pins">(
     "boards",
   );
+  const arcCount = new Set(createdBrags.map((b) => b.arc).filter(Boolean)).size;
   const profileStats = [
-    { label: "Boards", value: String(8 + createdBoards.length) },
-    { label: "Arcs", value: "9" },
-    { label: "Brags", value: String(2 + createdBrags.length) },
-    { label: "Pins", value: "672" },
+    { label: "Boards", value: String(createdBoards.length) },
+    { label: "Arcs", value: String(arcCount) },
+    { label: "Brags", value: String(createdBrags.length) },
+    { label: "Pins", value: "0" },
   ];
-  const rawProfileTiles: ProfileTile[] = [
-    ...createdBoards.map((board) => ({
-      name: board.name,
-      description:
-        board.description || "A new place to collect progress and proof.",
-      href: boardHref(board.name),
-      count: "0 brags",
-      detail: "new board",
-      pins: "0 pins",
-      privacy: "Public",
-      cover: board.cover,
-      size: board.size,
-    })),
-    ...tiles,
-  ];
+  const rawProfileTiles: ProfileTile[] = createdBoards.map((board) => ({
+    name: board.name,
+    description: board.description || "A new place to collect progress and proof.",
+    href: boardHref(board.name),
+    count: `${createdBrags.filter((b) => b.board === board.name).length} brags`,
+    detail: board.description || "new board",
+    pins: "0 pins",
+    privacy: "Public",
+    cover: board.cover,
+    size: board.size,
+  }));
   const profileTiles = rawProfileTiles
     .map((tile, index) => {
       const preference = preferences[tile.name];
@@ -262,7 +141,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="relative z-10 flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:px-5">
-            <div className="relative -mt-10 h-36 w-36 shrink-0 overflow-hidden rounded-full bg-zinc-950 ring-4 ring-[#fbfbfb] sm:-mt-12 sm:h-40 sm:w-40">
+            <div className="relative -mt-10 h-36 w-36 shrink-0 overflow-hidden rounded-full bg-zinc-950 ring-1 ring-white ring-offset-[3px] ring-offset-zinc-950 sm:-mt-12 sm:h-40 sm:w-40">
               <Image
                 src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
                 alt="Valentino Cavaricci profile photo"
@@ -276,27 +155,27 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-3xl font-semibold text-zinc-950 sm:text-4xl">
+                  <h1 className="text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">
                     Valentino Cavaricci
                   </h1>
                   <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                     Public
                   </span>
                 </div>
-                <p className="mt-1 text-sm font-normal text-zinc-400">
+                <p className="mt-1 text-sm font-semibold text-zinc-400">
                   @valentino · Orange County, CA
                 </p>
               </div>
 
-              <p className="mt-3 max-w-2xl text-[15px] font-normal leading-5 text-zinc-600">
+              <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-zinc-600">
                 Keeping proof of the work: books finished, miles logged, ideas
                 built, and a life in progress.
               </p>
 
-              <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[15px] font-normal text-zinc-500">
+              <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-semibold text-zinc-500">
                 {profileStats.map((stat) => (
                   <span key={stat.label}>
-                    <strong className="font-semibold text-zinc-800">
+                    <strong className="font-black text-zinc-950">
                       {stat.value}
                     </strong>{" "}
                     {stat.label}
@@ -487,13 +366,17 @@ export default function ProfilePage() {
 
             <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
               <div
-                className={`grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] transition duration-300 sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-5 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-4rem)/5))] ${
+                className={`transition duration-300 ${
                   activeProfileView === "boards"
                     ? "visible opacity-100"
                     : "invisible pointer-events-none opacity-0"
                 }`}
                 aria-hidden={activeProfileView !== "boards"}
               >
+              {profileTiles.length === 0 ? (
+                <BoardsEmptyState />
+              ) : (
+              <div className="grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-5 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-4rem)/5))]">
               {profileTiles.map((tile) => {
                 const size = profileBoardSizes[tile.size];
                 const backgroundImage = tile.cover
@@ -571,11 +454,6 @@ export default function ProfilePage() {
                           {tile.name}
                         </h3>
                         <p
-                          className={`mt-3 max-w-md text-white/82 ${size.description}`}
-                        >
-                          {tile.description}
-                        </p>
-                        <p
                           className={`mt-2 font-black uppercase text-white/70 ${size.detail}`}
                         >
                           {tile.detail}
@@ -586,6 +464,8 @@ export default function ProfilePage() {
                 );
               })}
               </div>
+              )}
+              </div>
 
               <div
                 className={`grid content-start gap-3 transition duration-300 lg:grid-cols-3 ${
@@ -595,39 +475,18 @@ export default function ProfilePage() {
                 }`}
                 aria-hidden={activeProfileView !== "pins"}
               >
-              {pinnedArcs.map((pin) => (
-                <article
-                  key={pin.title}
-                  className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm shadow-zinc-200"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-zinc-950">
-                        {pin.title}
-                      </p>
-                      <p className="mt-1 text-xs font-bold text-zinc-500">
-                        {pin.owner} · {pin.location}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-500">
-                      {pin.pins}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-black text-white">
-                      {pin.board}
-                    </span>
-                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-600">
-                      {pin.progress}
-                    </span>
-                  </div>
-
-                  <p className="mt-4 text-sm font-semibold leading-6 text-zinc-600">
-                    {pin.update}
+                <div className="col-span-full rounded-3xl border border-zinc-200 bg-white px-6 py-16 text-center shadow-sm shadow-zinc-200">
+                  <p className="text-xl font-black text-zinc-950">Nothing pinned yet.</p>
+                  <p className="mt-2 text-sm font-semibold text-zinc-500">
+                    Pin boards from Explore to follow just that slice of someone&rsquo;s progress.
                   </p>
-                </article>
-              ))}
+                  <Link
+                    href="/explore"
+                    className="mt-5 inline-flex h-11 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                  >
+                    Find boards to pin
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

@@ -1,8 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { AppNav } from "../components/app-nav";
 
 const boardRows = [
   {
-    title: "Fitness",
+    title: "🏋️ Fitness",
     boards: [
       {
         name: "Maya Chen",
@@ -37,7 +40,7 @@ const boardRows = [
     ],
   },
   {
-    title: "Food",
+    title: "🍳 Food",
     boards: [
       {
         name: "Elena Rossi",
@@ -72,7 +75,7 @@ const boardRows = [
     ],
   },
   {
-    title: "Education",
+    title: "📚 Education",
     boards: [
       {
         name: "Ari Stone",
@@ -107,7 +110,7 @@ const boardRows = [
     ],
   },
   {
-    title: "Career",
+    title: "💼 Career",
     boards: [
       {
         name: "Jordan Ellis",
@@ -142,7 +145,7 @@ const boardRows = [
     ],
   },
   {
-    title: "Faith & Wellness",
+    title: "🕊️ Faith & Wellness",
     boards: [
       {
         name: "Sofia Alvarez",
@@ -179,6 +182,21 @@ const boardRows = [
 ];
 
 export default function ExplorePage() {
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+  const filteredRows = query
+    ? boardRows
+        .map((row) => ({
+          ...row,
+          boards: row.boards.filter(
+            (item) =>
+              item.board.toLowerCase().includes(query) ||
+              item.name.toLowerCase().includes(query),
+          ),
+        }))
+        .filter((row) => row.boards.length > 0)
+    : boardRows;
+
   return (
     <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
@@ -195,13 +213,46 @@ export default function ExplorePage() {
             Discover public progress from people building discipline, skill,
             faith, fitness, and momentum.
           </p>
+
+          <div className="mt-8 max-w-2xl rounded-full border border-zinc-200 bg-white px-2 py-1.5 shadow-md shadow-zinc-200">
+            <div className="flex items-center gap-3 px-3">
+              <svg className="h-5 w-5 shrink-0 text-zinc-400" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pin progress, not people..."
+                className="flex-1 bg-transparent py-3 text-base font-semibold text-zinc-700 outline-none placeholder:font-medium placeholder:text-zinc-400"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
         </header>
 
         <section className="flex flex-col gap-9">
-          {boardRows.map((row) => (
+          {filteredRows.length === 0 && (
+            <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-16 text-center shadow-sm shadow-zinc-200">
+              <p className="text-xl font-black text-zinc-950">No boards match &ldquo;{search}&rdquo;</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-500">Try a different keyword.</p>
+            </div>
+          )}
+          {filteredRows.map((row) => (
             <section key={row.title}>
-              <div className="mb-3 flex items-center justify-between gap-4 px-1 sm:px-4 lg:px-10">
-                <h2 className="text-2xl font-black tracking-tight text-zinc-950">
+              <div className="mb-3 flex items-center justify-between gap-4 px-1 sm:px-4">
+                <h2 className="text-3xl font-black tracking-tight text-zinc-950">
                   {row.title}
                 </h2>
                 <button
