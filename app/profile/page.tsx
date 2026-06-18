@@ -7,6 +7,7 @@ import { AppNav } from "../components/app-nav";
 import { BoardsEmptyState } from "../components/boards-empty-state";
 import {
   boardCoverBackground,
+  boardTileSizes,
   type BoardCover,
   useBoardPreferences,
   useCreatedBoards,
@@ -40,32 +41,8 @@ type ProfileTile = {
   privacy: string;
   image?: string | null;
   cover?: BoardCover;
-  size: keyof typeof profileBoardSizes;
+  size: keyof typeof boardTileSizes;
 };
-
-const profileBoardSizes = {
-  small: {
-    tile: "col-span-1 row-span-1",
-    body: "p-4",
-    title: "text-2xl sm:text-3xl",
-    description: "line-clamp-2 text-sm leading-5",
-    detail: "line-clamp-2 text-[0.65rem] tracking-[0.14em]",
-  },
-  medium: {
-    tile: "col-span-2 row-span-1",
-    body: "p-4 sm:p-5",
-    title: "text-3xl sm:text-4xl",
-    description: "line-clamp-2 text-sm leading-5",
-    detail: "line-clamp-2 text-xs tracking-[0.16em]",
-  },
-  large: {
-    tile: "col-span-2 row-span-2",
-    body: "p-5",
-    title: "text-4xl sm:text-5xl",
-    description: "line-clamp-2 text-sm leading-6 sm:text-base",
-    detail: "line-clamp-2 text-xs tracking-[0.18em]",
-  },
-} as const;
 
 
 export default function ProfilePage() {
@@ -105,8 +82,8 @@ export default function ProfilePage() {
         name: preference?.title?.trim() || tile.name,
         description,
         detail: preference?.description?.trim() || tile.detail,
-        cover: preference?.cover ?? tile.cover,
-        size: preference?.size ?? tile.size,
+        cover: tile.cover ?? preference?.cover,
+        size: tile.size,
         order: preference?.order ?? index,
       };
     })
@@ -254,7 +231,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="-mt-9 overflow-hidden">
+        <section className="-mt-11 overflow-hidden">
           <div
             key={activeProfileView}
             className={
@@ -378,7 +355,7 @@ export default function ProfilePage() {
               ) : (
               <div className="grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-5 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-4rem)/5))]">
               {profileTiles.map((tile) => {
-                const size = profileBoardSizes[tile.size];
+                const size = boardTileSizes[tile.size];
                 const backgroundImage = tile.cover
                   ? boardCoverBackground(tile.cover)
                   : undefined;
@@ -403,7 +380,7 @@ export default function ProfilePage() {
                       <div className="absolute inset-0 bg-[linear-gradient(135deg,#123c36_0%,#375a4f_48%,#efe2b8_100%)]" />
                     )}
 
-                    <div className="absolute inset-x-0 bottom-0 h-3/5 backdrop-blur-[10px] [mask-image:linear-gradient(to_bottom,transparent_0%,black_42%,black_100%)]" />
+                    <div className="absolute inset-x-0 bottom-0 h-2/5 backdrop-blur-[10px] [mask-image:linear-gradient(to_bottom,transparent_0%,black_50%,black_100%)]" />
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06)_0%,rgba(0,0,0,0.28)_42%,rgba(0,0,0,0.82)_100%)]" />
 
                     <div

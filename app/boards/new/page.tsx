@@ -4,6 +4,7 @@ import { type ChangeEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "../../components/app-nav";
 import { BackButton } from "../../components/back-button";
+import { PhotoCropModal } from "../../components/photo-crop-modal";
 import {
   boardCoverBackground,
   createBoard,
@@ -75,6 +76,7 @@ export default function NewBoardPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [cropSrc, setCropSrc] = useState("");
   const [coverMode, setCoverMode] = useState<CoverMode>("gradient");
   const [solidColor, setSolidColor] = useState("#12345b");
   const [gradientStart, setGradientStart] = useState("#07111f");
@@ -113,15 +115,20 @@ export default function NewBoardPage() {
     if (!file) return;
 
     try {
-      const image = await compressCoverImage(file);
-      setCoverImage(image);
-      setCoverMode("photo");
-      setError("");
+      const raw = await compressCoverImage(file);
+      setCropSrc(raw);
     } catch {
       setError("That photo could not be prepared. Try another image.");
     }
 
     event.target.value = "";
+  }
+
+  function handleCropConfirm(dataUrl: string) {
+    setCoverImage(dataUrl);
+    setCoverMode("photo");
+    setCropSrc("");
+    setError("");
   }
 
   function handleCreateBoard() {
@@ -160,6 +167,13 @@ export default function NewBoardPage() {
 
   return (
     <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
+      {cropSrc ? (
+        <PhotoCropModal
+          src={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropSrc("")}
+        />
+      ) : null}
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
         <AppNav active="Boards" />
 
@@ -224,15 +238,26 @@ export default function NewBoardPage() {
                 </div>
 
                 {coverMode === "photo" ? (
-                  <label className="board-secondary mt-3 inline-flex h-12 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300">
-                    Select photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverChange}
-                      className="sr-only"
-                    />
-                  </label>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <label className="board-secondary inline-flex h-12 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300">
+                      {coverImage ? "Change photo" : "Select photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverChange}
+                        className="sr-only"
+                      />
+                    </label>
+                    {coverImage ? (
+                      <button
+                        type="button"
+                        onClick={() => setCropSrc(coverImage)}
+                        className="board-secondary inline-flex h-12 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300"
+                      >
+                        Re-adjust
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 {(coverMode === "color" || coverMode === "gradient") ? (

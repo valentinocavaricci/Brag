@@ -96,11 +96,29 @@ export function createBoard(input: {
   };
 
   writeCreatedBoards([board, ...readCreatedBoards()]);
+
+  // Clear all stale preference overrides (title/description/size/cover) for this name
+  // so the new board's canonical values always take effect. Keep only `order`.
+  const prefs = readBoardPreferences();
+  if (prefs[board.name]) {
+    const { order } = prefs[board.name];
+    writeBoardPreferences({
+      ...prefs,
+      [board.name]: order !== undefined ? { order } : {},
+    });
+  }
+
   return board;
 }
 
 export function deleteBoard(id: string) {
   const next = readCreatedBoards().filter((b) => b.id !== id);
+  writeCreatedBoards(next);
+}
+
+export function updateBoard(id: string, updates: Partial<Pick<CreatedBoard, "description" | "size" | "cover">>) {
+  const boards = readCreatedBoards();
+  const next = boards.map((b) => b.id === id ? { ...b, ...updates } : b);
   writeCreatedBoards(next);
 }
 
@@ -178,6 +196,27 @@ export function useBoardPreferences() {
     [preferences, setBoardOrder, updateBoardPreference],
   );
 }
+
+export const boardTileSizes = {
+  small: {
+    tile: "col-span-1 row-span-1",
+    body: "p-4",
+    title: "text-xl sm:text-2xl",
+    detail: "line-clamp-2 text-[0.65rem]",
+  },
+  medium: {
+    tile: "col-span-2 row-span-1",
+    body: "p-4 sm:p-5",
+    title: "text-2xl sm:text-3xl",
+    detail: "line-clamp-2 text-xs",
+  },
+  large: {
+    tile: "col-span-2 row-span-2",
+    body: "p-5 sm:p-6",
+    title: "text-3xl sm:text-4xl",
+    detail: "line-clamp-2 text-xs",
+  },
+} as const;
 
 export function boardCoverBackground(cover: BoardCover) {
   if (cover.mode === "photo") {

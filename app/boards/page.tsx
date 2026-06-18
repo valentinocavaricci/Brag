@@ -5,6 +5,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import { AppNav } from "../components/app-nav";
 import {
   boardCoverBackground,
+  boardTileSizes,
   type BoardCover,
   type BoardSize,
   useBoardPreferences,
@@ -12,7 +13,7 @@ import {
 } from "../lib/boards";
 import { boardHref, useCreatedBrags } from "../lib/brags";
 import { BoardsEmptyState } from "../components/boards-empty-state";
-import { deleteBoard } from "../lib/boards";
+import { deleteBoard, updateBoard } from "../lib/boards";
 
 type BoardCard = {
   id?: string;
@@ -30,28 +31,10 @@ type BoardCard = {
 
 type CoverMode = "photo" | "color" | "gradient";
 
-const boardTileSizes = {
-  small: {
-    tile: "col-span-1 row-span-1",
-    body: "p-4",
-    title: "text-xl sm:text-2xl",
-    detail: "line-clamp-2 text-[0.65rem]",
-    arrow: "h-9 w-9 text-base",
-  },
-  medium: {
-    tile: "col-span-2 row-span-1",
-    body: "p-4 sm:p-5",
-    title: "text-2xl sm:text-3xl",
-    detail: "line-clamp-2 text-xs",
-    arrow: "h-10 w-10 text-lg sm:h-11 sm:w-11",
-  },
-  large: {
-    tile: "col-span-2 row-span-2",
-    body: "p-5 sm:p-6",
-    title: "text-3xl sm:text-4xl",
-    detail: "line-clamp-2 text-xs",
-    arrow: "h-11 w-11 text-lg sm:h-12 sm:w-12",
-  },
+const boardArrowSizes = {
+  small: "h-9 w-9 text-base",
+  medium: "h-10 w-10 text-lg sm:h-11 sm:w-11",
+  large: "h-11 w-11 text-lg sm:h-12 sm:w-12",
 } as const;
 
 const boardSizeOptions = [
@@ -177,8 +160,8 @@ export default function BoardsPage() {
         ...board,
         name: preference?.title?.trim() || board.name,
         detail: preference?.description?.trim() || board.detail,
-        cover: preference?.cover ?? board.cover,
-        size: preference?.size ?? board.size,
+        cover: board.cover ?? preference?.cover,
+        size: board.size,
         order: preference?.order ?? index,
       };
     })
@@ -275,12 +258,16 @@ export default function BoardsPage() {
       return;
     }
 
+    if (editingBoardId) {
+      updateBoard(editingBoardId, {
+        description: draftDescription.trim() || "A place to collect progress and proof.",
+        size: draftSize,
+        cover: getDraftCover(),
+      });
+    }
     updateBoardPreference(editingBoardName, {
       title: draftTitle.trim(),
-      description:
-        draftDescription.trim() || "A place to collect progress and proof.",
-      size: draftSize,
-      cover: getDraftCover(),
+      description: draftDescription.trim() || "A place to collect progress and proof.",
     });
     setEditingBoardName("");
     setEditorError("");
@@ -451,7 +438,7 @@ export default function BoardsPage() {
                       ) : null}
                     </div>
                     <span
-                      className={`grid shrink-0 place-items-center rounded-full ${hasCover ? "bg-white/18 backdrop-blur-md" : board.color} ${size.arrow} font-semibold text-white transition group-hover:translate-x-1`}
+                      className={`grid shrink-0 place-items-center rounded-full ${hasCover ? "bg-white/18 backdrop-blur-md" : board.color} ${boardArrowSizes[board.size]} font-semibold text-white transition group-hover:translate-x-1`}
                     >
                       {isEditing ? "↕" : "→"}
                     </span>
