@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AppNav } from "../../components/app-nav";
 import { BragAttachments } from "../../components/brag-attachments";
 import { CommentsSheet } from "../../components/comments-sheet";
@@ -12,6 +12,7 @@ import {
   useBoardPreferences,
   useCreatedBoards,
 } from "../../lib/boards";
+import { useArcMeta } from "../../lib/arcs";
 import {
   createBrag,
   deleteBrag,
@@ -65,12 +66,14 @@ function compressImage(file: File): Promise<string> {
 export default function BoardPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug ?? "");
 
   const createdBoards = useCreatedBoards();
   const createdBrags = useCreatedBrags();
   const { preferences } = useBoardPreferences();
   const { cheeredIds, toggleCheer } = useCheers();
+  const { getArcMeta } = useArcMeta();
 
   const board = createdBoards.find((candidate) => nameToSlug(candidate.name) === slug);
   const boardPreference = board ? preferences[board.name] : undefined;
@@ -101,7 +104,9 @@ export default function BoardPage() {
     [boardBrags],
   );
 
-  const [activeView, setActiveView] = useState<"brags" | "arcs">("brags");
+  const [activeView, setActiveView] = useState<"brags" | "arcs">(
+    searchParams.get("view") === "arcs" ? "arcs" : "brags"
+  );
   const [composerOpen, setComposerOpen] = useState(false);
   const [composeText, setComposeText] = useState("");
   const [composeImage, setComposeImage] = useState("");
@@ -350,10 +355,10 @@ export default function BoardPage() {
               aria-hidden={activeView !== "brags"}
             >
               {composerOpen ? (
-                <article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-200">
-                  <div className="flex items-start gap-3">
-                    <div className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full bg-zinc-200">
-                      <Image src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg" alt="You" fill sizes="36px" className="object-cover" />
+                <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-200">
+                  <div className="flex items-start gap-3 p-5 sm:p-6">
+                    <div className="relative mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100">
+                      <Image src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg" alt="You" fill sizes="40px" className="object-cover" />
                     </div>
                     <textarea
                       autoFocus
@@ -361,18 +366,18 @@ export default function BoardPage() {
                       onChange={(e) => setComposeText(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost(); }}
                       placeholder={`What belongs in ${displayName}?`}
-                      rows={3}
-                      className="min-h-20 flex-1 resize-none bg-transparent text-base font-semibold leading-7 text-zinc-800 outline-none placeholder:text-zinc-400"
+                      rows={4}
+                      className="min-h-28 flex-1 resize-none bg-transparent text-base font-semibold leading-7 text-zinc-800 outline-none placeholder:text-zinc-400"
                     />
                   </div>
                   {composeImage ? (
-                    <div className="relative ml-12 mt-3 h-48 overflow-hidden rounded-xl bg-zinc-100">
-                      <Image src={composeImage} alt="Selected" fill sizes="(min-width: 768px) 40rem, calc(100vw - 7rem)" className="object-cover" unoptimized />
+                    <div className="relative mx-5 mb-4 overflow-hidden rounded-xl bg-zinc-100 sm:mx-6" style={{ aspectRatio: "16/9" }}>
+                      <Image src={composeImage} alt="Selected" fill sizes="(min-width: 768px) 40rem, calc(100vw - 2.5rem)" className="object-cover" unoptimized />
                       <button type="button" onClick={() => setComposeImage("")} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-zinc-950/75 text-white backdrop-blur-sm transition hover:bg-zinc-950" aria-label="Remove photo">×</button>
                     </div>
                   ) : null}
-                  <div className="ml-12 mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 sm:px-6">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-zinc-100 px-3 text-xs font-black text-zinc-600 transition hover:bg-zinc-200">
                         {composeImageLoading ? "Loading…" : "Photo"}
                         <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={composeImageLoading} className="sr-only" />
@@ -389,12 +394,12 @@ export default function BoardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <button type="button" onClick={() => { resetComposer(); setComposerOpen(false); }} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
-                      <button type="button" onClick={handlePost} disabled={(!composeText.trim() && !composeImage) || posting} className="h-8 rounded-full bg-zinc-950 px-4 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
+                      <button type="button" onClick={handlePost} disabled={(!composeText.trim() && !composeImage) || posting} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
                         {posting ? "Posting…" : "Brag"}
                       </button>
                     </div>
                   </div>
-                  {composeImageError ? <p className="ml-12 mt-2 text-xs font-bold text-red-600">{composeImageError}</p> : null}
+                  {composeImageError ? <p className="px-5 pb-3 text-xs font-bold text-red-600 sm:px-6">{composeImageError}</p> : null}
                 </article>
               ) : null}
 
@@ -403,7 +408,7 @@ export default function BoardPage() {
                   <div>
                     <p className="mb-3 text-4xl">⭐</p>
                     <p className="text-xl font-black tracking-tight text-zinc-950">Nothing logged yet.</p>
-                    <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">Drop your first proof moment — text, photo, or both.</p>
+                    <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">Log your first brag — text, photo, or both.</p>
                     <button type="button" onClick={() => setComposerOpen(true)} className="profile-primary-button mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">
                       Log first brag
                     </button>
@@ -415,7 +420,7 @@ export default function BoardPage() {
                 const isCheered = cheeredIds.has(String(post.id));
                 const hasMedia = Boolean(post.attachments?.length) || (post.type === "photo" && Boolean(post.image));
                 return (
-                  <article key={post.id} className={`overflow-hidden rounded-2xl border transition ${hasMedia ? "border-zinc-200 bg-white shadow-sm shadow-zinc-200" : "border-zinc-100 bg-white"}`}>
+                  <article key={post.id} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-100 transition">
                     {post.attachments?.length ? (
                       <BragAttachments attachments={post.attachments} />
                     ) : post.type === "photo" && post.image ? (
@@ -423,18 +428,18 @@ export default function BoardPage() {
                         <Image src={post.image} alt="" fill sizes="(min-width: 768px) 48rem, 100vw" className="object-cover" unoptimized />
                       </div>
                     ) : null}
-                    <div className="p-4 sm:p-5">
+                    <div className={hasMedia ? "p-4 sm:p-5" : "p-5 sm:p-6"}>
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-black uppercase tracking-[0.14em] text-zinc-400">{formatBragDate(post)}</span>
-                            {post.arc ? <span className="rounded-full bg-zinc-950 px-2.5 py-0.5 text-xs font-black text-white">{post.arc}</span> : null}
-                            {post.bragToFeed === false ? <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-black text-zinc-500">Board only</span> : null}
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">{formatBragDate(post)}</span>
+                            {post.arc ? <span className="rounded-full bg-zinc-950 px-2.5 py-0.5 text-[10px] font-black text-white">{post.arc}</span> : null}
+                            {post.bragToFeed === false ? <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-black text-zinc-500">Board only</span> : null}
                           </div>
                           {post.text ? (
-                            <p className={`mt-2 leading-snug text-zinc-950 ${hasMedia ? "text-base font-semibold" : "text-xl font-black sm:text-2xl"}`}>{post.text}</p>
+                            <p className={`mt-2 leading-snug text-zinc-950 ${hasMedia ? "text-base font-semibold" : "text-xl font-black tracking-tight sm:text-2xl"}`}>{post.text}</p>
                           ) : (
-                            <p className="mt-2 text-sm font-black text-zinc-400">Photo</p>
+                            <p className="mt-2 text-sm font-semibold text-zinc-400">Photo</p>
                           )}
                         </div>
                         <div className="relative shrink-0">
@@ -448,11 +453,11 @@ export default function BoardPage() {
                           ) : null}
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center gap-2">
-                        <button type="button" onClick={() => toggleCheer(post.id)} className={`rounded-full px-3 py-1.5 text-xs font-black transition ${isCheered ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-950 hover:text-white"}`}>
+                      <div className="mt-4 flex items-center gap-2">
+                        <button type="button" onClick={() => toggleCheer(post.id)} className={`h-9 rounded-full px-4 text-xs font-black transition ${isCheered ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
                           Cheer {post.cheers + (isCheered ? 1 : 0)}
                         </button>
-                        <button type="button" onClick={() => setCommentPost(post)} className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-black text-zinc-600 transition hover:bg-zinc-950 hover:text-white">
+                        <button type="button" onClick={() => setCommentPost(post)} className="h-9 rounded-full bg-zinc-100 px-4 text-xs font-black text-zinc-600 transition hover:bg-zinc-200">
                           Comment {post.comments}
                         </button>
                       </div>
@@ -468,12 +473,14 @@ export default function BoardPage() {
               aria-hidden={activeView !== "arcs"}
             >
               {arcFormOpen ? (
-                <article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-200">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-zinc-400">New Arc</p>
-                  <input autoFocus value={newArcName} onChange={(e) => setNewArcName(e.target.value)} placeholder="Name this journey" className="mt-3 h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-black text-zinc-950 outline-none transition focus:border-zinc-950 focus:bg-white" />
-                  <textarea value={newArcText} onChange={(e) => setNewArcText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleCreateArc(); }} placeholder="What's the first proof point?" rows={3} className="mt-2 min-h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold leading-6 text-zinc-700 outline-none transition focus:border-zinc-950 focus:bg-white" />
-                  <div className="mt-3 flex justify-between gap-3">
-                    <button type="button" onClick={() => setArcFormOpen(false)} className="h-9 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
+                <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-200">
+                  <div className="p-5 sm:p-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">New Arc</p>
+                    <input autoFocus value={newArcName} onChange={(e) => setNewArcName(e.target.value)} placeholder="Name this arc" className="mt-3 h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-base font-black text-zinc-950 outline-none transition focus:border-zinc-950 focus:bg-white" />
+                    <textarea value={newArcText} onChange={(e) => setNewArcText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleCreateArc(); }} placeholder="What's your first brag?" rows={3} className="mt-2 min-h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold leading-6 text-zinc-700 outline-none transition focus:border-zinc-950 focus:bg-white" />
+                  </div>
+                  <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 sm:px-6">
+                    <button type="button" onClick={() => setArcFormOpen(false)} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
                     <button type="button" onClick={handleCreateArc} disabled={!newArcName.trim() || !newArcText.trim() || creatingArc} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
                       {creatingArc ? "Creating…" : "Create Arc"}
                     </button>
@@ -486,8 +493,8 @@ export default function BoardPage() {
                   <div>
                     <p className="mb-3 text-4xl">🎯</p>
                     <p className="text-xl font-black tracking-tight text-zinc-950">No arcs yet.</p>
-                    <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">An arc is a focused journey inside this board — Ironman, a reading challenge, a push toward a goal.</p>
-                    <button type="button" onClick={() => setArcFormOpen(true)} className="mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">
+                    <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">An arc is a focused challenge inside this board — Ironman, a reading goal, a push toward something specific.</p>
+                    <button type="button" onClick={() => setArcFormOpen(true)} className="profile-primary-button mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">
                       Start first arc
                     </button>
                   </div>
@@ -495,7 +502,7 @@ export default function BoardPage() {
               ) : null}
 
               {arcs.map((arc) => (
-                <article key={arc.name} className="group cursor-pointer overflow-hidden rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-200">
+                <article key={arc.name} className="group cursor-pointer overflow-hidden rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-200" onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
                   <div className="flex min-h-36 flex-col justify-between bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(135deg,#09090b,#27272a)] p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex flex-wrap gap-2">
@@ -505,8 +512,12 @@ export default function BoardPage() {
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/14 text-sm transition group-hover:translate-x-0.5">→</span>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black tracking-tight sm:text-3xl">{arc.name}</h3>
-                      {arc.latest ? <p className="mt-1.5 line-clamp-1 text-sm font-semibold text-white/55">{arc.latest.text || "Media proof logged"}</p> : null}
+                      <h3 className="text-2xl font-black tracking-tight sm:text-3xl">
+                        {getArcMeta(board.name, arc.name).title?.trim() || arc.name}
+                      </h3>
+                      {getArcMeta(board.name, arc.name).about?.trim() ? (
+                        <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 text-white/60">{getArcMeta(board.name, arc.name).about}</p>
+                      ) : null}
                     </div>
                   </div>
                 </article>
