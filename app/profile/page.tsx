@@ -130,29 +130,24 @@ export default function ProfilePage() {
             </div>
 
             <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-3">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
-                    Valentino Cavaricci
-                  </h1>
-                  <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500">
-                    Public
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs font-semibold text-zinc-400">
-                  @valentino · Orange County, CA
-                </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-black tracking-tight text-zinc-950 sm:text-2xl">
+                  Valentino Cavaricci
+                </h1>
+                <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500">
+                  Public
+                </span>
               </div>
 
-              <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-zinc-500">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white">
                 Keeping proof of the work: books finished, miles logged, ideas
                 built, and a life in progress.
               </p>
 
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-zinc-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-semibold text-white">
                 {profileStats.map((stat) => (
                   <span key={stat.label}>
-                    <strong className="font-black text-zinc-950">
+                    <strong className="font-black text-white">
                       {stat.value}
                     </strong>{" "}
                     {stat.label}

@@ -177,8 +177,8 @@ export default function NewBoardPage() {
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
         <AppNav active="Boards" />
 
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-          <header className="px-1 py-4 sm:px-4">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+          <header className="px-1 pb-2 pt-4 sm:px-4">
             <BackButton />
             <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
               New Board
@@ -283,12 +283,13 @@ export default function NewBoardPage() {
                         </button>
                       </div>
                     )}
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-7 gap-1.5">
                       {[
-                        "#09090b", "#3f3f46", "#71717a", "#d4d4d8", "#ffffff",
-                        "#1e3a5f", "#1d4ed8", "#3b82f6", "#0ea5e9", "#06b6d4",
-                        "#14532d", "#15803d", "#22c55e", "#10b981", "#0d9488",
-                        "#7c2d12", "#b91c1c", "#be185d", "#9333ea", "#7c3aed",
+                        "#09090b", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#f4f4f5", "#ffffff",
+                        "#1e3a5f", "#1d4ed8", "#3b82f6", "#60a5fa", "#0ea5e9", "#06b6d4", "#0891b2",
+                        "#14532d", "#15803d", "#16a34a", "#22c55e", "#10b981", "#0d9488", "#0f766e",
+                        "#7c2d12", "#b91c1c", "#f97316", "#f59e0b", "#eab308", "#ca8a04", "#a16207",
+                        "#be185d", "#ec4899", "#e11d48", "#c026d3", "#9333ea", "#7c3aed", "#4f46e5",
                       ].map((color) => {
                         const isSelected = coverMode === "color"
                           ? solidColor === color
@@ -308,7 +309,7 @@ export default function NewBoardPage() {
                               }
                             }}
                             style={{ background: color }}
-                            className={`aspect-square rounded-xl transition hover:scale-105 ${isSelected ? "ring-2 ring-zinc-950 ring-offset-2" : ""}`}
+                            className={`aspect-square rounded-lg transition hover:scale-105 ${isSelected ? "ring-2 ring-zinc-950 ring-offset-2" : ""}`}
                           />
                         );
                       })}

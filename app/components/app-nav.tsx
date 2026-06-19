@@ -103,7 +103,7 @@ export function AppNav({ active = "Home" }: { active?: string }) {
                     aria-current={isActive ? "page" : undefined}
                     className={
                       item.primary
-                        ? "nav-primary-button ml-2 inline-flex h-11 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                        ? "nav-primary-button mx-2 inline-flex h-11 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white shadow-sm shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
                         : `relative inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold transition hover:bg-white hover:text-zinc-950 ${
                             isActive
                               ? "bg-white text-zinc-950 shadow-sm shadow-zinc-200"

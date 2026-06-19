@@ -261,12 +261,6 @@ export default function BoardPage() {
                 <span aria-hidden="true">←</span>
                 Boards
               </button>
-              <Link
-                href="/brags/new"
-                className="inline-flex h-10 items-center rounded-full bg-white/90 px-4 text-sm font-black text-zinc-950 shadow-sm shadow-zinc-950/20 transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Full Brag
-              </Link>
             </div>
 
             <div>
@@ -407,9 +401,10 @@ export default function BoardPage() {
               {boardBrags.length === 0 && !composerOpen ? (
                 <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed border-zinc-200 px-6 py-12 text-center">
                   <div>
+                    <p className="mb-3 text-4xl">⭐</p>
                     <p className="text-xl font-black tracking-tight text-zinc-950">Nothing logged yet.</p>
                     <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">Drop your first proof moment — text, photo, or both.</p>
-                    <button type="button" onClick={() => setComposerOpen(true)} className="mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">
+                    <button type="button" onClick={() => setComposerOpen(true)} className="profile-primary-button mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">
                       Log first brag
                     </button>
                   </div>
@@ -489,6 +484,7 @@ export default function BoardPage() {
               {arcs.length === 0 && !arcFormOpen ? (
                 <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed border-zinc-200 px-6 py-12 text-center">
                   <div>
+                    <p className="mb-3 text-4xl">🎯</p>
                     <p className="text-xl font-black tracking-tight text-zinc-950">No arcs yet.</p>
                     <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-6 text-zinc-500">An arc is a focused journey inside this board — Ironman, a reading challenge, a push toward a goal.</p>
                     <button type="button" onClick={() => setArcFormOpen(true)} className="mt-5 inline-flex h-10 items-center rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800">

@@ -7,8 +7,8 @@ export default function EditProfilePage() {
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
         <AppNav active="Profile" />
 
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-          <header className="px-1 py-4 sm:px-4">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+          <header className="px-1 pb-2 pt-4 sm:px-4">
             <BackButton />
             <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Edit Profile
