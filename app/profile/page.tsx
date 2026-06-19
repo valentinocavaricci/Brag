@@ -107,49 +107,49 @@ export default function ProfilePage() {
       >
         <AppNav active="Profile" />
 
-        <header className="-mt-8 py-2">
-          <div className="relative h-28 overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_24%_35%,rgba(56,189,248,0.62)_0%,transparent_34%),radial-gradient(circle_at_78%_18%,rgba(99,102,241,0.5)_0%,transparent_32%),linear-gradient(120deg,#07111f_0%,#12345b_48%,#0f766e_100%)] sm:h-32">
+        <header className="-mt-8 pb-5 pt-2">
+          <div className="relative h-24 overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_24%_35%,rgba(56,189,248,0.62)_0%,transparent_34%),radial-gradient(circle_at_78%_18%,rgba(99,102,241,0.5)_0%,transparent_32%),linear-gradient(120deg,#07111f_0%,#12345b_48%,#0f766e_100%)] sm:h-28">
             <Link
               href="/profile/edit"
-              className="profile-soft-button absolute right-3 top-3 z-10 inline-flex h-10 w-32 items-center justify-center rounded-full border border-white/70 bg-white/88 px-4 text-sm font-semibold text-zinc-700 shadow-sm shadow-zinc-950/10 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-zinc-950 sm:right-4 sm:top-4"
+              className="profile-soft-button absolute right-3 top-3 z-10 inline-flex h-9 w-28 items-center justify-center rounded-full border border-white/70 bg-white/88 px-4 text-xs font-semibold text-zinc-700 shadow-sm shadow-zinc-950/10 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-zinc-950 sm:right-4 sm:top-4"
             >
               Edit Profile
             </Link>
           </div>
 
-          <div className="relative z-10 flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:px-5">
-            <div className="relative -mt-10 h-36 w-36 shrink-0 overflow-hidden rounded-full bg-zinc-950 ring-1 ring-white ring-offset-[3px] ring-offset-zinc-950 sm:-mt-12 sm:h-40 sm:w-40">
+          <div className="relative z-10 flex flex-col gap-3 px-3 sm:flex-row sm:items-start sm:px-5">
+            <div className="relative -mt-8 h-28 w-28 shrink-0 overflow-hidden rounded-full bg-zinc-900 ring-2 ring-white ring-offset-2 ring-offset-zinc-950 sm:-mt-10 sm:h-32 sm:w-32">
               <Image
                 src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
                 alt="Valentino Cavaricci profile photo"
                 fill
-                sizes="(min-width: 640px) 160px, 144px"
+                sizes="(min-width: 640px) 128px, 112px"
                 className="scale-[1.3] object-cover object-[48%_43%]"
                 priority
               />
             </div>
 
-            <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-4">
+            <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">
+                  <h1 className="text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
                     Valentino Cavaricci
                   </h1>
-                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-500">
                     Public
                   </span>
                 </div>
-                <p className="mt-1 text-sm font-semibold text-zinc-400">
+                <p className="mt-0.5 text-xs font-semibold text-zinc-400">
                   @valentino · Orange County, CA
                 </p>
               </div>
 
-              <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-zinc-600">
+              <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-zinc-500">
                 Keeping proof of the work: books finished, miles logged, ideas
                 built, and a life in progress.
               </p>
 
-              <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-semibold text-zinc-500">
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-zinc-500">
                 {profileStats.map((stat) => (
                   <span key={stat.label}>
                     <strong className="font-black text-zinc-950">
@@ -161,49 +161,45 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        </header>
 
-        <section className="-mt-5 px-1 sm:px-4 lg:px-10">
-          <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                My Clique
-              </p>
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-500">
-                {clique.length}/{maxCliqueSize}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-4 px-3 sm:px-5">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                  My Clique
+                </p>
+                <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-black text-zinc-500">
+                  {clique.length}/{maxCliqueSize}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsCliqueEditorOpen(true)}
-                className="profile-soft-button inline-flex h-10 w-32 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white px-4 text-sm font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
+                className="profile-soft-button inline-flex h-8 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white px-3 text-xs font-black text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950"
               >
                 Edit Clique
               </button>
             </div>
-          </div>
-          <div className="grid snap-x snap-mandatory grid-flow-col auto-cols-[calc((100%-1rem)/3)] gap-2 overflow-x-auto overscroll-x-contain scroll-smooth py-2 [scrollbar-width:none] sm:auto-cols-[calc((100%-2rem)/5)] lg:auto-cols-[calc((100%-3.5rem)/8)] [&::-webkit-scrollbar]:hidden">
+            <div className="grid snap-x snap-mandatory grid-flow-col auto-cols-[calc((100%-1rem)/3)] gap-2 overflow-x-auto overscroll-x-contain scroll-smooth py-1 [scrollbar-width:none] sm:auto-cols-[calc((100%-2rem)/5)] lg:auto-cols-[calc((100%-3.5rem)/8)] [&::-webkit-scrollbar]:hidden">
             {clique.map((person) => (
               <div
                 key={person.name}
                 className="flex min-w-0 snap-start snap-always flex-col items-center"
               >
                 <div className="relative rounded-full bg-gradient-to-tr from-zinc-200 via-zinc-100 to-zinc-300 p-0.5">
-                  <div className="rounded-full bg-[#fbfbfb] p-0.5">
-                    <div className="relative h-[4.5rem] w-[4.5rem] overflow-hidden rounded-full bg-zinc-100">
+                  <div className="rounded-full bg-white p-0.5">
+                    <div className="relative h-14 w-14 overflow-hidden rounded-full bg-zinc-100">
                       <Image
                         src={person.avatar}
                         alt={`${person.name} profile photo`}
                         fill
-                        sizes="72px"
+                        sizes="56px"
                         className="object-cover"
                       />
                     </div>
                     {"unreadMessages" in person ? (
                       <span
-                        className="absolute -right-0.5 -top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-[#fbfbfb] bg-zinc-950 text-white shadow-sm shadow-zinc-300"
+                        className="absolute -right-0.5 -top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-zinc-950 text-white shadow-sm shadow-zinc-300"
                         aria-label={`${person.name} sent ${person.unreadMessages} unread messages`}
                       >
                         <svg
@@ -223,15 +219,16 @@ export default function ProfilePage() {
                     ) : null}
                   </div>
                 </div>
-                <p className="mt-2 max-w-20 truncate text-center text-sm font-semibold text-zinc-700">
+                <p className="mt-1.5 max-w-16 truncate text-center text-xs font-semibold text-zinc-600">
                   {person.name}
                 </p>
               </div>
             ))}
           </div>
-        </section>
+          </div>
+        </header>
 
-        <section className="-mt-11 overflow-hidden">
+        <section className="-mt-16 overflow-hidden">
           <div
             key={activeProfileView}
             className={
