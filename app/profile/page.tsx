@@ -116,62 +116,104 @@ export default function ProfilePage() {
       >
         <AppNav active="Profile" />
 
-        <header className="-mt-8 pb-5 pt-2">
-          <div className="relative h-24 overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_24%_35%,rgba(56,189,248,0.62)_0%,transparent_34%),radial-gradient(circle_at_78%_18%,rgba(99,102,241,0.5)_0%,transparent_32%),linear-gradient(120deg,#07111f_0%,#12345b_48%,#0f766e_100%)] sm:h-28">
+        <header className="pb-2">
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
             <Link
               href="/profile/edit"
-              className="profile-soft-button absolute right-3 top-3 z-10 inline-flex h-9 w-28 items-center justify-center rounded-full border border-white/70 bg-white/88 px-4 text-xs font-semibold text-zinc-700 shadow-sm shadow-zinc-950/10 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-zinc-950 sm:right-4 sm:top-4"
+              className="absolute right-0 top-0 inline-flex h-9 w-28 items-center justify-center rounded-full border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 shadow-sm shadow-zinc-200 transition hover:-translate-y-0.5 hover:text-zinc-950"
             >
               Edit Profile
             </Link>
-          </div>
 
-          <div className="relative z-10 flex flex-col gap-3 px-3 sm:flex-row sm:items-start sm:px-5">
-            <div className="relative -mt-8 h-28 w-28 shrink-0 overflow-hidden rounded-full bg-zinc-100 ring-4 ring-white shadow-sm shadow-zinc-300 sm:-mt-10 sm:h-32 sm:w-32">
-              <Image
-                src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
-                alt="Valentino Cavaricci profile photo"
-                fill
-                sizes="(min-width: 640px) 128px, 112px"
-                className="scale-[1.3] object-cover object-[48%_43%]"
-                priority
-              />
-            </div>
+            {/* Profile pic + clique orbit */}
+            {(() => {
+              const size = 220;
+              const picSize = 110;
+              const dotSize = 28;
+              const orbitR = 88;
+              const slots = maxCliqueSize;
+              return (
+                <button
+                  type="button"
+                  onClick={() => setIsCliqueEditorOpen(true)}
+                  className="group relative shrink-0 transition duration-300 hover:scale-105"
+                  style={{ width: size, height: size }}
+                  aria-label="Edit clique"
+                >
+                  {Array.from({ length: slots }).map((_, i) => {
+                    const angle = (i / slots) * 2 * Math.PI - Math.PI / 2;
+                    const cx = size / 2 + orbitR * Math.cos(angle) - dotSize / 2;
+                    const cy = size / 2 + orbitR * Math.sin(angle) - dotSize / 2;
+                    const person = clique[i];
+                    return (
+                      <div
+                        key={i}
+                        className={`absolute flex items-center justify-center overflow-hidden rounded-full text-[9px] font-black ${person ? "bg-zinc-200 text-zinc-700 ring-[1px] ring-white" : "border border-dashed border-zinc-200"}`}
+                        style={{ width: dotSize, height: dotSize, left: cx, top: cy }}
+                      >
+                        {person ? (
+                          <Image src={person.avatar} alt={person.name} fill sizes="26px" className="object-cover" />
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                  {/* Center pic */}
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-zinc-100 ring-2 ring-white shadow-md shadow-zinc-300"
+                    style={{ width: picSize, height: picSize }}
+                  >
+                    <Image
+                      src="/6A85CB5E-12A6-4793-B441-913A0D8DD07E_1_105_c.jpeg"
+                      alt="Valentino Cavaricci"
+                      fill
+                      sizes="110px"
+                      className="scale-[1.3] object-cover object-[48%_43%] transition duration-300 group-hover:blur-sm group-hover:brightness-50"
+                      priority
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 group-hover:opacity-100">
+                      <span className="text-center text-[10px] font-black leading-tight tracking-wide text-white">View<br/>Clique</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })()}
 
-            <div className="min-w-0 flex-1 pb-1 pt-1 sm:pt-3">
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-black leading-tight tracking-tight text-zinc-950 sm:text-3xl">
+                <h1 className="text-xl font-black leading-tight tracking-tight text-zinc-950 sm:text-2xl">
                   {profile.displayName}
                 </h1>
                 <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-black text-zinc-500">
                   {profile.visibility}
                 </span>
-              </div>
-              <p className="mt-1 text-sm font-semibold leading-5 text-zinc-400">
-                {profile.handle}
-                {profile.location ? ` · ${profile.location}` : ""}
-              </p>
-
-              <p className="mt-3 max-w-2xl text-base font-normal leading-7 text-zinc-700">
-                {profile.bio}
-              </p>
-
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-zinc-500">
-                {profileStats.map((stat) => (
-                  <span key={stat.label} className="inline-flex items-baseline gap-1">
-                    <strong className="font-black text-zinc-950">
-                      {stat.value}
-                    </strong>
-                    <span>{stat.label}</span>
+                {profile.location ? (
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-black text-zinc-500">
+                    {profile.location}
                   </span>
+                ) : null}
+              </div>
+
+              <span className="text-sm font-semibold text-zinc-400">{profile.handle}</span>
+
+              {profile.bio ? (
+                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-zinc-950">
+                  {profile.bio}
+                </p>
+              ) : null}
+
+              <div className="mt-3 flex items-center gap-5">
+                {profileStats.map((stat) => (
+                  <div key={stat.label} className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black tracking-tight text-zinc-950">{stat.value}</span>
+                    <span className="text-xs font-semibold text-zinc-400">{stat.label}</span>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
-
         </header>
 
-        <section className="-mt-8 overflow-hidden">
+        <section className="-mt-4 overflow-hidden">
           <div key={activeProfileView} className={activeProfileView === "hub" ? "animate-profile-swipe-left" : "animate-profile-swipe-right"}>
 
             {/* Title + icon toggle + action */}
