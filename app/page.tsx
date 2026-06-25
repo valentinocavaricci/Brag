@@ -40,20 +40,19 @@ export default function Home() {
   const createdBoards = useCreatedBoards();
   const livePosts = allPosts.filter((post) => post.bragToFeed !== false);
   const totalCheers = livePosts.reduce((total, post) => total + post.cheers, 0);
-  const pinnedUpdates = livePosts.filter(
-    (post) => post.source === "Pinned Arc",
-  );
 
   type FeedView = "All" | "My Clique" | "My Pins";
   const feedViews: FeedView[] = ["All", "My Clique", "My Pins"];
   const [feedView, setFeedView] = useState<FeedView>("All");
   const { pinnedBoards, togglePin } = usePinnedBoards();
 
+  const pinnedUpdates = livePosts.filter((post) => pinnedBoards.has(post.board));
+
   const filteredPosts =
     feedView === "My Clique"
-      ? livePosts.filter((p) => p.source === "Clique")
+      ? livePosts.filter((p) => p.source !== "Private")
       : feedView === "My Pins"
-        ? livePosts.filter((p) => p.source === "Pinned Arc" || pinnedBoards.has(p.board))
+        ? pinnedUpdates
         : livePosts;
 
   const allBoardOptions = createdBoards.map((b) => b.name);
@@ -137,6 +136,12 @@ export default function Home() {
     }, 650);
   }
 
+  function getSourceLabel(post: (typeof livePosts)[number]) {
+    if (post.arc) return `Arc · ${post.arc}`;
+    if (post.source === "Private") return "Private";
+    return post.source === "Public" ? "Public" : "Clique";
+  }
+
   return (
     <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
@@ -212,7 +217,14 @@ export default function Home() {
 
 
 
-            {filteredPosts.map((post) => (
+            {filteredPosts.map((post) => {
+              const hasMedia =
+                Boolean(post.attachments?.length) ||
+                post.type === "photo" ||
+                post.type === "video";
+              const isLongText = post.text.length > 110;
+
+              return (
               <article
                 key={post.id}
                 className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-200"
@@ -242,12 +254,12 @@ export default function Home() {
                     <div className="flex flex-wrap justify-end gap-2">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-black ${
-                          post.source === "Pinned Arc"
+                          post.arc
                             ? "bg-zinc-950 text-white"
                             : "bg-zinc-100 text-zinc-600"
                         }`}
                       >
-                        {post.source}
+                        {getSourceLabel(post)}
                       </span>
                       {"pins" in post ? (
                         <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-600">
@@ -326,17 +338,22 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="px-5 pb-2 pt-4">
-                    <p className="text-2xl font-black leading-snug tracking-tight text-zinc-950 sm:text-3xl">
+                    <p className={`text-zinc-950 ${
+                      isLongText
+                        ? "text-lg font-semibold leading-8 sm:text-xl"
+                        : "text-xl font-black leading-snug tracking-tight sm:text-2xl"
+                    }`}>
                       {post.text}
                     </p>
                   </div>
                 )}
 
-                {(post.attachments?.length ||
-                  post.type === "photo" ||
-                  post.type === "video") &&
-                post.text ? (
-                  <p className="px-5 pt-4 text-base font-semibold leading-7 text-zinc-700">
+                {hasMedia && post.text ? (
+                  <p className={`px-5 pt-4 text-zinc-700 ${
+                    isLongText
+                      ? "text-base font-medium leading-7"
+                      : "text-base font-semibold leading-7"
+                  }`}>
                     {post.text}
                   </p>
                 ) : null}
@@ -362,7 +379,8 @@ export default function Home() {
                   </button>
                 </div>
               </article>
-            ))}
+              );
+            })}
 
             {filteredPosts.length === 0 ? (
               <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center shadow-sm shadow-zinc-200">
@@ -424,7 +442,7 @@ export default function Home() {
                     {pinnedUpdates.length}
                   </p>
                   <p className="text-sm font-bold text-zinc-500">
-                    pinned arc updates
+                    pinned board updates
                   </p>
                 </div>
                 <div>

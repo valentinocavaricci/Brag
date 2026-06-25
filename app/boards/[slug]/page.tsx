@@ -12,10 +12,11 @@ import {
   useBoardPreferences,
   useCreatedBoards,
 } from "../../lib/boards";
-import { useArcMeta } from "../../lib/arcs";
+import { useArcMeta, deleteArcMeta } from "../../lib/arcs";
 import {
   createBrag,
   deleteBrag,
+  unlinkBragsFromArc,
   formatBragDate,
   type BragAttachment,
   type BragPost,
@@ -73,7 +74,7 @@ export default function BoardPage() {
   const createdBrags = useCreatedBrags();
   const { preferences } = useBoardPreferences();
   const { cheeredIds, toggleCheer } = useCheers();
-  const { getArcMeta } = useArcMeta();
+  const { getArcMeta, getArcNamesForBoard, updateArcMeta } = useArcMeta();
 
   const board = createdBoards.find((candidate) => nameToSlug(candidate.name) === slug);
   const boardPreference = board ? preferences[board.name] : undefined;
@@ -89,20 +90,17 @@ export default function BoardPage() {
       (brag) => brag.board === board.name || brag.board === displayName,
     );
   }, [board, createdBrags, displayName]);
-  const arcs = useMemo(
-    () =>
-      [...new Set(boardBrags.map((brag) => brag.arc).filter(Boolean))].map(
-        (arcName) => {
-          const arcBrags = boardBrags.filter((brag) => brag.arc === arcName);
-          return {
-            name: arcName as string,
-            brags: arcBrags,
-            latest: arcBrags[0],
-          };
-        },
-      ),
-    [boardBrags],
-  );
+  const arcs = useMemo(() => {
+    if (!board) return [];
+    const fromBrags = boardBrags.map((b) => b.arc).filter(Boolean) as string[];
+    const fromMeta = getArcNamesForBoard(board.name);
+    const allArcNames = [...new Set([...fromBrags, ...fromMeta])];
+    return allArcNames.map((arcName) => {
+      const arcBrags = boardBrags.filter((b) => b.arc === arcName);
+      const meta = getArcMeta(board.name, arcName);
+      return { name: arcName, brags: arcBrags, latest: arcBrags[0], meta };
+    });
+  }, [board, boardBrags, getArcMeta, getArcNamesForBoard]);
 
   const [activeView, setActiveView] = useState<"brags" | "arcs">(
     searchParams.get("view") === "arcs" ? "arcs" : "brags"
@@ -116,8 +114,10 @@ export default function BoardPage() {
   const [composeToFeed, setComposeToFeed] = useState(true);
   const [posting, setPosting] = useState(false);
   const [arcFormOpen, setArcFormOpen] = useState(false);
+  const [openArcMenuName, setOpenArcMenuName] = useState<string | null>(null);
   const [newArcName, setNewArcName] = useState("");
-  const [newArcText, setNewArcText] = useState("");
+  const [newArcAbout, setNewArcAbout] = useState("");
+  const [newArcIsPublic, setNewArcIsPublic] = useState(true);
   const [creatingArc, setCreatingArc] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [commentPost, setCommentPost] = useState<BragPost | null>(null);
@@ -196,20 +196,19 @@ export default function BoardPage() {
 
   function handleCreateArc() {
     const arcName = newArcName.trim();
-    const arcText = newArcText.trim();
-    if (!arcName || !arcText || creatingArc || !board) return;
+    const arcAbout = newArcAbout.trim();
+    if (!arcName || creatingArc || !board) return;
 
     setCreatingArc(true);
     window.setTimeout(() => {
-      createBrag({
-        text: arcText,
-        board: board.name,
-        visibility: "Clique only",
-        arc: arcName,
-        bragToFeed: true,
+      updateArcMeta(board.name, arcName, {
+        title: arcName,
+        about: arcAbout,
+        isPublic: newArcIsPublic,
       });
       setNewArcName("");
-      setNewArcText("");
+      setNewArcAbout("");
+      setNewArcIsPublic(true);
       setArcFormOpen(false);
       setCreatingArc(false);
       setToast("Arc started");
@@ -419,6 +418,7 @@ export default function BoardPage() {
               {boardBrags.map((post) => {
                 const isCheered = cheeredIds.has(String(post.id));
                 const hasMedia = Boolean(post.attachments?.length) || (post.type === "photo" && Boolean(post.image));
+                const isLongText = post.text.length > 110;
                 return (
                   <article key={post.id} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-100 transition">
                     {post.attachments?.length ? (
@@ -437,7 +437,13 @@ export default function BoardPage() {
                             {post.bragToFeed === false ? <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-black text-zinc-500">Board only</span> : null}
                           </div>
                           {post.text ? (
-                            <p className={`mt-2 leading-snug text-zinc-950 ${hasMedia ? "text-base font-semibold" : "text-xl font-black tracking-tight sm:text-2xl"}`}>{post.text}</p>
+                            <p className={`mt-3 text-zinc-950 ${
+                              hasMedia
+                                ? "text-base font-semibold leading-7"
+                                : isLongText
+                                  ? "text-lg font-semibold leading-8 sm:text-xl"
+                                  : "text-xl font-black leading-snug tracking-tight sm:text-2xl"
+                            }`}>{post.text}</p>
                           ) : (
                             <p className="mt-2 text-sm font-semibold text-zinc-400">Photo</p>
                           )}
@@ -476,12 +482,23 @@ export default function BoardPage() {
                 <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-200">
                   <div className="p-5 sm:p-6">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">New Arc</p>
-                    <input autoFocus value={newArcName} onChange={(e) => setNewArcName(e.target.value)} placeholder="Name this arc" className="mt-3 h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-base font-black text-zinc-950 outline-none transition focus:border-zinc-950 focus:bg-white" />
-                    <textarea value={newArcText} onChange={(e) => setNewArcText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleCreateArc(); }} placeholder="What's your first brag?" rows={3} className="mt-2 min-h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold leading-6 text-zinc-700 outline-none transition focus:border-zinc-950 focus:bg-white" />
+                    <input autoFocus value={newArcName} onChange={(e) => setNewArcName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleCreateArc(); }} placeholder="Name this arc" className="mt-3 h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-base font-black text-zinc-950 outline-none transition focus:border-zinc-950 focus:bg-white" />
+                    <textarea value={newArcAbout} onChange={(e) => setNewArcAbout(e.target.value)} placeholder="What are you trying to build, finish, or track?" rows={2} className="mt-2 min-h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold leading-6 text-zinc-700 outline-none transition focus:border-zinc-950 focus:bg-white" />
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setNewArcIsPublic(!newArcIsPublic)}
+                        className={`flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-black transition ${newArcIsPublic ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-zinc-400"}`}
+                      >
+                        <span>{newArcIsPublic ? "🌎" : "🔒"}</span>
+                        <span>{newArcIsPublic ? "Public" : "Private"}</span>
+                      </button>
+                      <span className="text-xs font-semibold text-zinc-400">{newArcIsPublic ? "Visible to everyone" : "Only visible to you"}</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 sm:px-6">
                     <button type="button" onClick={() => setArcFormOpen(false)} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
-                    <button type="button" onClick={handleCreateArc} disabled={!newArcName.trim() || !newArcText.trim() || creatingArc} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
+                    <button type="button" onClick={handleCreateArc} disabled={!newArcName.trim() || creatingArc} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
                       {creatingArc ? "Creating…" : "Create Arc"}
                     </button>
                   </div>
@@ -502,21 +519,46 @@ export default function BoardPage() {
               ) : null}
 
               {arcs.map((arc) => (
-                <article key={arc.name} className="group cursor-pointer overflow-hidden rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-200" onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
-                  <div className="flex min-h-36 flex-col justify-between bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(135deg,#09090b,#27272a)] p-5">
+                <article key={arc.name} className={`group cursor-pointer overflow-hidden rounded-2xl text-white shadow-sm shadow-zinc-200 ${arc.meta.completed ? "bg-zinc-800" : "bg-zinc-950"}`} onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
+                  <div className={`flex min-h-36 flex-col justify-between p-5 ${
+                    arc.meta.completed
+                      ? "bg-[radial-gradient(circle_at_20%_20%,rgba(134,239,172,0.16),transparent_40%),linear-gradient(135deg,#18181b,#3f3f46)]"
+                      : "bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(135deg,#09090b,#27272a)]"
+                  }`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-white/14 px-2.5 py-1 text-xs font-black">Active</span>
+                        <span className="rounded-full bg-white/14 px-2.5 py-1 text-xs font-black">{arc.meta.completed ? "Complete" : "Active"}</span>
                         <span className="rounded-full bg-white/14 px-2.5 py-1 text-xs font-black">{arc.brags.length} {arc.brags.length === 1 ? "brag" : "brags"}</span>
+                        <span className="rounded-full bg-white/14 px-2.5 py-1 text-xs font-black">{arc.meta.isPublic === false ? "🔒 Private" : "🌎 Public"}</span>
                       </div>
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/14 text-sm transition group-hover:translate-x-0.5">→</span>
+                      <div className="relative shrink-0 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setOpenArcMenuName(openArcMenuName === arc.name ? null : arc.name); }}
+                          className="grid h-8 w-8 place-items-center rounded-full bg-white/14 text-white transition hover:bg-white/24"
+                          aria-label="Arc options"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+                        </button>
+                        {openArcMenuName === arc.name ? (
+                          <div className="absolute right-0 top-full z-20 mt-1 min-w-36 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-950/10" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => { unlinkBragsFromArc(board!.name, arc.name); deleteArcMeta(board!.name, arc.name); setOpenArcMenuName(null); }}
+                              className="flex w-full items-center px-4 py-3 text-sm font-black text-red-500 transition hover:bg-red-50"
+                            >
+                              Delete arc
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-2xl font-black tracking-tight sm:text-3xl">
-                        {getArcMeta(board.name, arc.name).title?.trim() || arc.name}
+                        {arc.meta.title?.trim() || arc.name}
                       </h3>
-                      {getArcMeta(board.name, arc.name).about?.trim() ? (
-                        <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 text-white/60">{getArcMeta(board.name, arc.name).about}</p>
+                      {arc.meta.about?.trim() ? (
+                        <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 text-white/60">{arc.meta.about}</p>
                       ) : null}
                     </div>
                   </div>

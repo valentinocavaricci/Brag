@@ -1,17 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, type ChangeEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppNav } from "../../../../components/app-nav";
 import { BragAttachments } from "../../../../components/brag-attachments";
 import { CommentsSheet } from "../../../../components/comments-sheet";
 import { boardCoverBackground, useBoardPreferences, useCreatedBoards } from "../../../../lib/boards";
-import { useArcMeta } from "../../../../lib/arcs";
+import { useArcMeta, deleteArcMeta } from "../../../../lib/arcs";
 import {
   createBrag,
   deleteBrag,
+  unlinkBragsFromArc,
   formatBragDate,
+  type BragAttachment,
   useCheers,
   useCreatedBrags,
   type BragPost,
@@ -21,6 +23,50 @@ function nameToSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+function slugToTitle(slug: string) {
+  return decodeURIComponent(slug)
+    .split("-")
+    .filter(Boolean)
+    .map((word) => {
+      if (/^\d+$/.test(word)) return word;
+      return `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
+    })
+    .join(" ");
+}
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new window.Image();
+
+      image.onload = () => {
+        const maxSize = 1200;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("Could not prepare image."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+
+      image.onerror = () => reject(new Error("Could not load image."));
+      image.src = String(reader.result);
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ArcPage() {
   const { slug, arcSlug } = useParams<{ slug: string; arcSlug: string }>();
   const router = useRouter();
@@ -28,16 +74,22 @@ export default function ArcPage() {
   const { preferences } = useBoardPreferences();
   const allBrags = useCreatedBrags();
   const { cheeredIds, toggleCheer } = useCheers();
-  const { getArcMeta, updateArcMeta } = useArcMeta();
+  const { getArcMeta, getArcNamesForBoard, updateArcMeta } = useArcMeta();
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [composeText, setComposeText] = useState("");
+  const [composeImage, setComposeImage] = useState("");
+  const [composeImageLoading, setComposeImageLoading] = useState(false);
+  const [composeImageError, setComposeImageError] = useState("");
   const [posting, setPosting] = useState(false);
   const [commentPost, setCommentPost] = useState<BragPost | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editAbout, setEditAbout] = useState("");
+  const [editCompleted, setEditCompleted] = useState(false);
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const beginningRef = useRef<HTMLDivElement>(null);
 
@@ -48,11 +100,13 @@ export default function ArcPage() {
 
   const arcName = useMemo(() => {
     if (!board) return "";
-    const arcNames = [...new Set(
+    const fromBrags = [...new Set(
       allBrags.filter((b) => b.board === board.name && b.arc).map((b) => b.arc as string)
     )];
-    return arcNames.find((n) => nameToSlug(n) === arcSlug) ?? decodeURIComponent(arcSlug);
-  }, [board, allBrags, arcSlug]);
+    const fromMeta = getArcNamesForBoard(board.name);
+    const allArcNames = [...new Set([...fromBrags, ...fromMeta])];
+    return allArcNames.find((n) => nameToSlug(n) === arcSlug) ?? slugToTitle(arcSlug);
+  }, [board, allBrags, arcSlug, getArcNamesForBoard]);
 
   // Newest first — oldest is at the bottom (the beginning of the journey)
   const arcBrags = useMemo(() => {
@@ -62,6 +116,7 @@ export default function ArcPage() {
 
   const arcMeta = board ? getArcMeta(board.name, arcName) : {};
   const displayArcTitle = arcMeta.title?.trim() || arcName;
+  const isCompleted = Boolean(arcMeta.completed);
 
   const coverStyle = displayCover
     ? { backgroundImage: boardCoverBackground(displayCover) }
@@ -80,18 +135,57 @@ export default function ArcPage() {
     );
   }
 
+  async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setComposeImageLoading(true);
+    setComposeImageError("");
+
+    try {
+      const image = await compressImage(file);
+      setComposeImage(image);
+    } catch {
+      setComposeImageError("That photo could not be prepared. Try another.");
+    } finally {
+      setComposeImageLoading(false);
+    }
+
+    event.target.value = "";
+  }
+
+  function resetComposer() {
+    setComposeText("");
+    setComposeImage("");
+    setComposeImageError("");
+  }
+
   function handlePost() {
-    if (!composeText.trim() || posting) return;
+    const text = composeText.trim();
+    if ((!text && !composeImage) || posting) return;
     setPosting(true);
     window.setTimeout(() => {
+      const attachments: BragAttachment[] = composeImage
+        ? [
+            {
+              id: String(Date.now()),
+              url: composeImage,
+              kind: "image",
+              name: "photo.jpg",
+              mimeType: "image/jpeg",
+            },
+          ]
+        : [];
+
       createBrag({
-        text: composeText.trim(),
+        text,
         board: board!.name,
         visibility: "Clique only",
+        attachments: attachments.length ? attachments : undefined,
         arc: arcName,
         bragToFeed: true,
       });
-      setComposeText("");
+      resetComposer();
       setComposerOpen(false);
       setPosting(false);
     }, 560);
@@ -100,6 +194,8 @@ export default function ArcPage() {
   function openEdit() {
     setEditTitle(arcMeta.title?.trim() || arcName);
     setEditAbout(arcMeta.about?.trim() || "");
+    setEditCompleted(Boolean(arcMeta.completed));
+    setEditIsPublic(arcMeta.isPublic !== false);
     setEditOpen(true);
   }
 
@@ -107,8 +203,17 @@ export default function ArcPage() {
     updateArcMeta(board!.name, arcName, {
       title: editTitle.trim() || arcName,
       about: editAbout.trim(),
+      completed: editCompleted,
+      isPublic: editIsPublic,
     });
     setEditOpen(false);
+    setDeleteConfirm(false);
+  }
+
+  function handleDeleteArc() {
+    unlinkBragsFromArc(board!.name, arcName);
+    deleteArcMeta(board!.name, arcName);
+    router.push(`/boards/${slug}?view=arcs`);
   }
 
   return (
@@ -147,7 +252,12 @@ export default function ArcPage() {
                 <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
                   {arcBrags.length} {arcBrags.length === 1 ? "brag" : "brags"}
                 </span>
-                <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">Active</span>
+                <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
+                  {isCompleted ? "Complete" : "Active"}
+                </span>
+                <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
+                  {arcMeta.isPublic === false ? "🔒 Private" : "🌎 Public"}
+                </span>
               </div>
               <h1 className="mt-4 break-words text-4xl font-black leading-none tracking-tight sm:text-5xl">
                 {displayArcTitle}
@@ -177,17 +287,58 @@ export default function ArcPage() {
                 rows={3}
                 className="mt-2 min-h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold leading-6 text-zinc-700 outline-none transition focus:border-zinc-950 focus:bg-white"
               />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editCompleted}
+                  onClick={() => setEditCompleted((current) => !current)}
+                  className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-black transition ${
+                    editCompleted
+                      ? "bg-zinc-950 text-white"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                  }`}
+                >
+                  <span className={`h-2.5 w-2.5 rounded-full ${editCompleted ? "bg-emerald-300" : "bg-zinc-400"}`} />
+                  {editCompleted ? "Arc complete" : "Mark arc complete"}
+                </button>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editIsPublic}
+                  onClick={() => setEditIsPublic((v) => !v)}
+                  className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-black transition ${
+                    editIsPublic
+                      ? "bg-zinc-950 text-white"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                  }`}
+                >
+                  <span>{editIsPublic ? "🌎" : "🔒"}</span>
+                  {editIsPublic ? "Public" : "Private"}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-3 sm:px-6">
-              <button type="button" onClick={() => setEditOpen(false)} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
-              <button type="button" onClick={saveEdit} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800">Save</button>
+            <div className="flex items-center justify-between gap-2 border-t border-zinc-100 px-5 py-3 sm:px-6">
+              {deleteConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-red-500">Delete this arc?</span>
+                  <button type="button" onClick={handleDeleteArc} className="h-8 rounded-full bg-red-500 px-3 text-xs font-black text-white transition hover:bg-red-600">Yes, delete</button>
+                  <button type="button" onClick={() => setDeleteConfirm(false)} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setDeleteConfirm(true)} className="h-8 rounded-full px-3 text-xs font-black text-red-400 transition hover:text-red-600">Delete arc</button>
+              )}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => { setEditOpen(false); setDeleteConfirm(false); }} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
+                <button type="button" onClick={saveEdit} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800">Save</button>
+              </div>
             </div>
           </article>
         ) : null}
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">Brags</h2>
+            <h2 className="text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">Timeline</h2>
             {arcBrags.length > 1 && (
               <button
                 type="button"
@@ -229,11 +380,26 @@ export default function ArcPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-3 sm:px-6">
-              <button type="button" onClick={() => { setComposeText(""); setComposerOpen(false); }} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
-              <button type="button" onClick={handlePost} disabled={!composeText.trim() || posting} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
-                {posting ? "Posting…" : "Brag"}
-              </button>
+            {composeImage ? (
+              <div className="relative mx-5 mb-4 overflow-hidden rounded-xl bg-zinc-100 sm:mx-6" style={{ aspectRatio: "16/9" }}>
+                <Image src={composeImage} alt="Selected" fill sizes="(min-width: 768px) 40rem, calc(100vw - 2.5rem)" className="object-cover" unoptimized />
+                <button type="button" onClick={() => setComposeImage("")} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-zinc-950/75 text-white backdrop-blur-sm transition hover:bg-zinc-950" aria-label="Remove photo">×</button>
+              </div>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 sm:px-6">
+              <div>
+                <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-zinc-100 px-3 text-xs font-black text-zinc-600 transition hover:bg-zinc-200">
+                  {composeImageLoading ? "Loading…" : "Photo"}
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={composeImageLoading} className="sr-only" />
+                </label>
+                {composeImageError ? <p className="mt-2 text-xs font-bold text-red-600">{composeImageError}</p> : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => { resetComposer(); setComposerOpen(false); }} className="h-8 rounded-full px-3 text-xs font-black text-zinc-400 transition hover:text-zinc-700">Cancel</button>
+                <button type="button" onClick={handlePost} disabled={(!composeText.trim() && !composeImage) || posting} className="h-9 rounded-full bg-zinc-950 px-5 text-xs font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
+                  {posting ? "Posting…" : "Brag"}
+                </button>
+              </div>
             </div>
           </article>
         ) : null}
@@ -257,20 +423,21 @@ export default function ArcPage() {
           <div className="relative pb-4">
             <div className="absolute left-[5px] top-2 bottom-0 w-px bg-zinc-200" />
 
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-5">
               {arcBrags.map((post, index) => {
                 const isCheered = cheeredIds.has(String(post.id));
                 const isFirst = index === 0;
                 const isLast = index === arcBrags.length - 1;
                 const hasMedia = Boolean(post.attachments?.length) || (post.type === "photo" && Boolean(post.image));
+                const isLongText = post.text.length > 110;
                 return (
-                  <div key={post.id} ref={isLast ? beginningRef : undefined} className="relative flex gap-5 pl-8">
+                  <div key={post.id} ref={isLast ? beginningRef : undefined} className="relative flex gap-4 pl-7">
                     {/* Newest = filled black dot, older = gray */}
-                    <div className={`absolute left-0 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[#fbfbfb] ${isFirst ? "bg-zinc-950" : "bg-zinc-400"}`} />
+                    <div className={`absolute left-0 top-5 h-[11px] w-[11px] rounded-full border-2 border-[#fbfbfb] ${isFirst ? "bg-zinc-950" : "bg-zinc-400"}`} />
 
-                    <div className="min-w-0 flex-1">
+                    <article className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-100 sm:p-5">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">
                           {formatBragDate(post)}{isFirst ? " · Latest" : isLast ? " · Beginning" : ""}
                         </span>
                         <div className="relative shrink-0">
@@ -296,12 +463,18 @@ export default function ArcPage() {
                       ) : null}
 
                       {post.text ? (
-                        <p className={`mt-2 leading-snug text-zinc-950 ${hasMedia ? "text-base font-semibold" : "text-xl font-black tracking-tight sm:text-2xl"}`}>
+                        <p className={`mt-3 text-zinc-950 ${
+                          hasMedia
+                            ? "text-base font-semibold leading-7"
+                            : isLongText
+                              ? "text-lg font-semibold leading-8 sm:text-xl"
+                              : "text-xl font-black leading-snug tracking-tight sm:text-2xl"
+                        }`}>
                           {post.text}
                         </p>
                       ) : null}
 
-                      <div className="mt-3 flex items-center gap-2">
+                      <div className="mt-4 flex items-center gap-2">
                         <button type="button" onClick={() => toggleCheer(post.id)} className={`h-8 rounded-full px-3.5 text-xs font-black transition ${isCheered ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
                           Cheer {post.cheers + (isCheered ? 1 : 0)}
                         </button>
@@ -309,7 +482,7 @@ export default function ArcPage() {
                           Comment {post.comments}
                         </button>
                       </div>
-                    </div>
+                    </article>
                   </div>
                 );
               })}

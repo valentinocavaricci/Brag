@@ -116,6 +116,19 @@ export function deleteBrag(id: number) {
   writeCreatedBrags(next);
 }
 
+export function deleteBragsForBoards(boardNames: string[]) {
+  const names = new Set(boardNames);
+  const next = readCreatedBrags().filter((brag) => !names.has(brag.board));
+  writeCreatedBrags(next);
+}
+
+export function unlinkBragsFromArc(boardName: string, arcName: string) {
+  const next = readCreatedBrags().map((b) =>
+    b.board === boardName && b.arc === arcName ? { ...b, arc: undefined } : b,
+  );
+  writeCreatedBrags(next);
+}
+
 export function useBrags() {
   const [createdBrags, setCreatedBrags] = useState<BragPost[]>([]);
 
@@ -238,6 +251,14 @@ function readPinnedBoards(): Set<string> {
 function writePinnedBoards(boards: Set<string>) {
   window.localStorage.setItem(PINS_KEY, JSON.stringify([...boards]));
   window.dispatchEvent(new Event("pins:updated"));
+}
+
+export function removePinnedBoards(boardNames: string[]) {
+  const names = new Set(boardNames);
+  const next = new Set(
+    [...readPinnedBoards()].filter((boardName) => !names.has(boardName)),
+  );
+  writePinnedBoards(next);
 }
 
 export function usePinnedBoards() {

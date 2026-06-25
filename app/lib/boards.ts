@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { deleteArcMetaForBoards } from "./arcs";
+import { deleteBragsForBoards, removePinnedBoards } from "./brags";
 
 export type BoardSize = "small" | "medium" | "large";
 
@@ -112,8 +114,25 @@ export function createBoard(input: {
 }
 
 export function deleteBoard(id: string) {
-  const next = readCreatedBoards().filter((b) => b.id !== id);
+  const boards = readCreatedBoards();
+  const board = boards.find((b) => b.id === id);
+  if (!board) return;
+
+  const preferences = readBoardPreferences();
+  const titleAlias = preferences[board.name]?.title?.trim();
+  const boardNames = titleAlias ? [board.name, titleAlias] : [board.name];
+  const next = boards.filter((b) => b.id !== id);
+
   writeCreatedBoards(next);
+  deleteBragsForBoards(boardNames);
+  removePinnedBoards(boardNames);
+  deleteArcMetaForBoards(boardNames);
+
+  if (preferences[board.name]) {
+    const nextPreferences = { ...preferences };
+    delete nextPreferences[board.name];
+    writeBoardPreferences(nextPreferences);
+  }
 }
 
 export function updateBoard(id: string, updates: Partial<Pick<CreatedBoard, "description" | "size" | "cover">>) {

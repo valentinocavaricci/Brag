@@ -10,7 +10,7 @@ import {
   createBrag,
   useCreatedBrags,
 } from "../../lib/brags";
-import { boardCoverBackground, useCreatedBoards } from "../../lib/boards";
+import { boardCoverBackground, createBoard, useCreatedBoards } from "../../lib/boards";
 
 const steps = ["Write", "Media", "Board", "Arc", "Review"];
 
@@ -192,6 +192,20 @@ export default function NewBragPage() {
     await new Promise((resolve) => window.setTimeout(resolve, 1650));
 
     try {
+      if (boardMode === "new" && newBoard.trim()) {
+        const alreadyExists = createdBoards.some(
+          (b) => b.name.toLowerCase() === newBoard.trim().toLowerCase(),
+        );
+        if (!alreadyExists) {
+          createBoard({
+            name: newBoard.trim(),
+            description: "",
+            size: "medium",
+            cover: { mode: "gradient", start: "#09090b", end: "#27272a", angle: "135deg" },
+          });
+        }
+      }
+
       const brag = createBrag({
         text,
         board: destinationBoard,
@@ -270,17 +284,17 @@ export default function NewBragPage() {
                 </div>
               </div>
 
-              <div className="overflow-hidden">
-                <div
-                  className="flex transition-transform duration-300 ease-out"
-                  style={{
-                    width: `${steps.length * 100}%`,
-                    transform: `translateX(-${step * (100 / steps.length)}%)`,
-                  }}
-                >
+              <div className="relative overflow-hidden">
                   <section
-                    className="flex-none p-5 sm:p-6"
-                    style={{ width: `${100 / steps.length}%` }}
+                    className="p-5 sm:p-6"
+                    style={{
+                      position: step === 0 ? "relative" : "absolute",
+                      inset: step === 0 ? undefined : 0,
+                      transform: `translateX(${(0 - step) * 110}%)`,
+                      transition: "transform 300ms ease-out",
+                      pointerEvents: step === 0 ? "auto" : "none",
+                      opacity: Math.abs(step - 0) > 1 ? 0 : 1,
+                    }}
                   >
                     <label className="block text-sm font-black text-zinc-700">
                       Brag text
@@ -330,8 +344,15 @@ export default function NewBragPage() {
                   </section>
 
                   <section
-                    className="flex-none p-5 sm:p-6"
-                    style={{ width: `${100 / steps.length}%` }}
+                    className="p-5 sm:p-6"
+                    style={{
+                      position: step === 1 ? "relative" : "absolute",
+                      inset: step === 1 ? undefined : 0,
+                      transform: `translateX(${(1 - step) * 110}%)`,
+                      transition: "transform 300ms ease-out",
+                      pointerEvents: step === 1 ? "auto" : "none",
+                      opacity: Math.abs(step - 1) > 1 ? 0 : 1,
+                    }}
                   >
                     <div>
                       <p className="text-xl font-black tracking-tight">
@@ -426,8 +447,15 @@ export default function NewBragPage() {
                   </section>
 
                   <section
-                    className="flex-none p-5 sm:p-6"
-                    style={{ width: `${100 / steps.length}%` }}
+                    className="p-5 sm:p-6"
+                    style={{
+                      position: step === 2 ? "relative" : "absolute",
+                      inset: step === 2 ? undefined : 0,
+                      transform: `translateX(${(2 - step) * 110}%)`,
+                      transition: "transform 300ms ease-out",
+                      pointerEvents: step === 2 ? "auto" : "none",
+                      opacity: Math.abs(step - 2) > 1 ? 0 : 1,
+                    }}
                   >
                     <p className="text-xl font-black tracking-tight">
                       Choose a board
@@ -529,11 +557,18 @@ export default function NewBragPage() {
                   </section>
 
                   <section
-                    className="flex-none p-5 sm:p-6"
-                    style={{ width: `${100 / steps.length}%` }}
+                    className="p-5 sm:p-6"
+                    style={{
+                      position: step === 3 ? "relative" : "absolute",
+                      inset: step === 3 ? undefined : 0,
+                      transform: `translateX(${(3 - step) * 110}%)`,
+                      transition: "transform 300ms ease-out",
+                      pointerEvents: step === 3 ? "auto" : "none",
+                      opacity: Math.abs(step - 3) > 1 ? 0 : 1,
+                    }}
                   >
                     <p className="text-xl font-black tracking-tight">
-                      Add it to a arc?
+                      Add it to an arc?
                     </p>
                     <p className="mt-1 text-sm font-semibold text-zinc-500">
                       Optional. This brag is already going to {destinationBoard}.
@@ -649,8 +684,15 @@ export default function NewBragPage() {
                   </section>
 
                   <section
-                    className="flex-none p-5 sm:p-6"
-                    style={{ width: `${100 / steps.length}%` }}
+                    className="p-5 sm:p-6"
+                    style={{
+                      position: step === 4 ? "relative" : "absolute",
+                      inset: step === 4 ? undefined : 0,
+                      transform: `translateX(${(4 - step) * 110}%)`,
+                      transition: "transform 300ms ease-out",
+                      pointerEvents: step === 4 ? "auto" : "none",
+                      opacity: Math.abs(step - 4) > 1 ? 0 : 1,
+                    }}
                   >
                     <div className="grid gap-4">
                       <div>
@@ -788,7 +830,6 @@ export default function NewBragPage() {
                       </div>
                     </div>
                   </section>
-                </div>
               </div>
 
               {error ? (

@@ -7,6 +7,8 @@ const arcMetaKey = "brag.arcMeta.v1";
 export type ArcMeta = {
   title?: string;
   about?: string;
+  completed?: boolean;
+  isPublic?: boolean;
 };
 
 type ArcMetaStore = Record<string, ArcMeta>;
@@ -29,6 +31,24 @@ function readArcMeta(): ArcMetaStore {
 function writeArcMeta(meta: ArcMetaStore) {
   window.localStorage.setItem(arcMetaKey, JSON.stringify(meta));
   window.dispatchEvent(new Event("arcMeta:updated"));
+}
+
+export function deleteArcMetaForBoards(boardNames: string[]) {
+  const names = new Set(boardNames);
+  const current = readArcMeta();
+  const next = Object.fromEntries(
+    Object.entries(current).filter(([key]) => {
+      const boardName = key.split("::")[0];
+      return !names.has(boardName);
+    }),
+  );
+  writeArcMeta(next);
+}
+
+export function deleteArcMeta(board: string, arc: string) {
+  const current = readArcMeta();
+  const { [storeKey(board, arc)]: _, ...next } = current;
+  writeArcMeta(next);
 }
 
 export function useArcMeta() {
@@ -56,5 +76,15 @@ export function useArcMeta() {
     [meta],
   );
 
-  return { getArcMeta, updateArcMeta };
+  const getArcNamesForBoard = useCallback(
+    (board: string): string[] => {
+      const prefix = `${board}::`;
+      return Object.keys(meta)
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => k.slice(prefix.length));
+    },
+    [meta],
+  );
+
+  return { getArcMeta, getArcNamesForBoard, updateArcMeta };
 }
