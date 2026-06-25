@@ -90,6 +90,8 @@ export default function ArcPage() {
   const [editCompleted, setEditCompleted] = useState(false);
   const [editIsPublic, setEditIsPublic] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [shareComplete, setShareComplete] = useState(false);
+  const [shareText, setShareText] = useState("");
 
   const beginningRef = useRef<HTMLDivElement>(null);
 
@@ -222,11 +224,12 @@ export default function ArcPage() {
         <AppNav active="Boards" />
 
         <header
-          className="relative min-h-56 overflow-hidden rounded-[1.75rem] bg-cover bg-center text-white shadow-sm shadow-zinc-200"
+          className="relative min-h-72 overflow-hidden rounded-[1.75rem] bg-cover bg-center text-white shadow-sm shadow-zinc-200"
           style={coverStyle}
         >
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.22)_38%,rgba(0,0,0,0.84)_100%)]" />
-          <div className="relative z-10 flex min-h-56 flex-col justify-between p-5 sm:p-6">
+          {isCompleted ? <div className="absolute inset-0 bg-emerald-950/40 mix-blend-multiply" /> : null}
+          <div className="relative z-10 flex min-h-72 flex-col justify-between p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -236,24 +239,39 @@ export default function ArcPage() {
                 <span aria-hidden="true">←</span>
                 {displayName}
               </button>
-              <button
-                type="button"
-                onClick={openEdit}
-                className="grid h-9 w-9 place-items-center rounded-full bg-white/14 text-white backdrop-blur-md transition hover:bg-white/24"
-                aria-label="Edit arc"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {isCompleted ? (
+                  <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-4 py-2 backdrop-blur-md">
+                    <svg className="h-4 w-4 text-emerald-300" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                    <span className="text-sm font-black text-emerald-300">Complete</span>
+                    <button type="button" onClick={() => updateArcMeta(board.name, arcName, { completed: false })} className="ml-1 text-[10px] font-black uppercase tracking-wide text-emerald-300/60 transition hover:text-emerald-300">Undo</button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { updateArcMeta(board.name, arcName, { completed: true }); setShareText(""); setShareComplete(true); }}
+                    className="inline-flex h-10 items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 text-sm font-black text-white backdrop-blur-md transition hover:bg-white/20"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                    Mark Complete
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/14 text-white backdrop-blur-md transition hover:bg-white/24"
+                  aria-label="Edit arc"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div>
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
                   {arcBrags.length} {arcBrags.length === 1 ? "brag" : "brags"}
-                </span>
-                <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
-                  {isCompleted ? "Complete" : "Active"}
                 </span>
                 <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
                   {arcMeta.isPublic === false ? "🔒 Private" : "🌎 Public"}
@@ -265,9 +283,53 @@ export default function ArcPage() {
               {arcMeta.about?.trim() ? (
                 <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-white/70">{arcMeta.about}</p>
               ) : null}
+
             </div>
           </div>
         </header>
+
+        {/* Share completion moment */}
+        {shareComplete ? (
+          <div className="animate-modal-in overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm shadow-zinc-200">
+            <div className="border-b border-emerald-50 bg-emerald-50 px-5 py-4">
+              <p className="text-sm font-black text-emerald-800">🎉 Arc complete — want to share this moment?</p>
+              <p className="mt-0.5 text-xs font-semibold text-emerald-600">Post a brag to your feed to celebrate finishing <span className="font-black">{displayArcTitle}</span>.</p>
+            </div>
+            <div className="p-5">
+              <textarea
+                value={shareText}
+                onChange={(e) => setShareText(e.target.value)}
+                placeholder={`Just completed "${displayArcTitle}" — `}
+                rows={3}
+                autoFocus
+                className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm font-semibold leading-6 text-zinc-950 outline-none transition focus:border-zinc-950 focus:bg-white"
+              />
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShareComplete(false)}
+                  className="text-sm font-black text-zinc-400 transition hover:text-zinc-700"
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = shareText.trim() || `Just completed "${displayArcTitle}" — another arc done. 🎯`;
+                    createBrag({ text, board: board.name, arc: arcName, visibility: "Public", bragToFeed: true });
+                    setShareComplete(false);
+                  }}
+                  className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-950 px-5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-zinc-800"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Post to Feed
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Edit arc panel */}
         {editOpen ? (

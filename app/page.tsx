@@ -209,7 +209,7 @@ export default function Home() {
                   className="object-cover"
                 />
               </div>
-              <span className="text-sm font-normal text-zinc-300">
+              <span className="text-sm font-black text-zinc-500">
                 {bragPrompts[promptIndex]}
               </span>
             </button>

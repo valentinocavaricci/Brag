@@ -18,6 +18,7 @@ export type CreatedBoard = {
   size: BoardSize;
   cover: BoardCover;
   createdAt: number;
+  pinCount?: number;
 };
 
 const storageKey = "brag.createdBoards.v1";

@@ -21,16 +21,13 @@ export default function EditProfilePage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDisplayName(profile.displayName);
-      setHandle(profile.handle);
-      setLocation(profile.location);
-      setVisibility(profile.visibility);
-      setBio(profile.bio);
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [profile]);
+    setDisplayName(profile.displayName);
+    setHandle(profile.handle);
+    setLocation(profile.location);
+    setVisibility(profile.visibility);
+    setBio(profile.bio);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSave() {
     updateProfile({

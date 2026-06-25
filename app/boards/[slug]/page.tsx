@@ -115,6 +115,7 @@ export default function BoardPage() {
   const [posting, setPosting] = useState(false);
   const [arcFormOpen, setArcFormOpen] = useState(false);
   const [openArcMenuName, setOpenArcMenuName] = useState<string | null>(null);
+  const [arcFilter, setArcFilter] = useState<"all" | "active" | "complete">("all");
   const [newArcName, setNewArcName] = useState("");
   const [newArcAbout, setNewArcAbout] = useState("");
   const [newArcIsPublic, setNewArcIsPublic] = useState(true);
@@ -274,6 +275,9 @@ export default function BoardPage() {
                 </span>
                 <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
                   {arcs.length} {arcs.length === 1 ? "arc" : "arcs"}
+                </span>
+                <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black backdrop-blur-md">
+                  {(board.pinCount ?? 0).toLocaleString()} {(board.pinCount ?? 0) === 1 ? "pin" : "pins"}
                 </span>
               </div>
               <h1 className="mt-4 break-words text-5xl font-black leading-none tracking-tight sm:text-6xl">
@@ -505,6 +509,21 @@ export default function BoardPage() {
                 </article>
               ) : null}
 
+              {arcs.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  {(["all", "active", "complete"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setArcFilter(f)}
+                      className={`h-8 rounded-full px-3.5 text-xs font-black transition ${arcFilter === f ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-950"}`}
+                    >
+                      {f === "all" ? "All" : f === "active" ? "In Progress" : "Complete"}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
               {arcs.length === 0 && !arcFormOpen ? (
                 <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed border-zinc-200 px-6 py-12 text-center">
                   <div>
@@ -518,7 +537,7 @@ export default function BoardPage() {
                 </div>
               ) : null}
 
-              {arcs.map((arc) => (
+              {arcs.filter((arc) => arcFilter === "all" || (arcFilter === "complete" ? arc.meta.completed : !arc.meta.completed)).map((arc) => (
                 <article key={arc.name} className={`group cursor-pointer overflow-hidden rounded-2xl text-white shadow-sm shadow-zinc-200 ${arc.meta.completed ? "bg-zinc-800" : "bg-zinc-950"}`} onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
                   <div className={`flex min-h-36 flex-col justify-between p-5 ${
                     arc.meta.completed
