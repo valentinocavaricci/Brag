@@ -9,7 +9,8 @@ export type BoardSize = "small" | "medium" | "large";
 export type BoardCover =
   | { mode: "photo"; image: string }
   | { mode: "color"; color: string }
-  | { mode: "gradient"; start: string; end: string; angle: string };
+  | { mode: "gradient"; start: string; end: string; angle: string }
+  | { mode: "emoji"; emoji: string };
 
 export type CreatedBoard = {
   id: string;
@@ -19,6 +20,7 @@ export type CreatedBoard = {
   cover: BoardCover;
   createdAt: number;
   pinCount?: number;
+  isPrivate?: boolean;
 };
 
 const storageKey = "brag.createdBoards.v1";
@@ -238,7 +240,18 @@ export const boardTileSizes = {
   },
 } as const;
 
+export const JUNK_DRAWER_BOARD: CreatedBoard = {
+  id: "system-junk-drawer",
+  name: "The Junk Drawer",
+  description: "Brags that don't belong anywhere else.",
+  size: "small",
+  cover: { mode: "emoji", emoji: "🗄️" },
+  createdAt: 0,
+};
+
 export function boardCoverBackground(cover: BoardCover) {
+  if (cover.mode === "emoji") return "";
+
   if (cover.mode === "photo") {
     return `linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.8) 100%), url(${cover.image})`;
   }
@@ -247,5 +260,9 @@ export function boardCoverBackground(cover: BoardCover) {
     return `linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.52) 100%), linear-gradient(135deg, ${cover.color}, ${cover.color})`;
   }
 
-  return `radial-gradient(circle at 24% 28%, color-mix(in srgb, ${cover.end} 46%, white), transparent 34%), linear-gradient(${cover.angle}deg, ${cover.start} 0%, ${cover.end} 100%)`;
+  if (cover.mode === "gradient") {
+    return `radial-gradient(circle at 24% 28%, color-mix(in srgb, ${cover.end} 46%, white), transparent 34%), linear-gradient(${cover.angle}deg, ${cover.start} 0%, ${cover.end} 100%)`;
+  }
+
+  return "";
 }

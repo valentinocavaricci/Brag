@@ -10,10 +10,12 @@ import {
   type BoardSize,
   useBoardPreferences,
   useCreatedBoards,
+  JUNK_DRAWER_BOARD,
+  deleteBoard,
+  updateBoard,
 } from "../lib/boards";
 import { boardHref, useCreatedBrags } from "../lib/brags";
 import { BoardsEmptyState } from "../components/boards-empty-state";
-import { deleteBoard, updateBoard } from "../lib/boards";
 
 type BoardCard = {
   id?: string;
@@ -152,20 +154,35 @@ export default function BoardsPage() {
     size: board.size,
     cover: board.cover,
   }));
-  const boardCards: BoardCard[] = rawBoardCards
-    .map((board, index) => {
-      const preference = preferences[board.storageName];
+  const boardCards: BoardCard[] = [
+    ...rawBoardCards
+      .map((board, index) => {
+        const preference = preferences[board.storageName];
 
-      return {
-        ...board,
-        name: preference?.title?.trim() || board.name,
-        detail: preference?.description?.trim() || board.detail,
-        cover: board.cover ?? preference?.cover,
-        size: board.size,
-        order: preference?.order ?? index,
-      };
-    })
-    .sort((first, second) => first.order - second.order);
+        return {
+          ...board,
+          name: preference?.title?.trim() || board.name,
+          detail: preference?.description?.trim() || board.detail,
+          cover: board.cover ?? preference?.cover,
+          size: board.size,
+          order: preference?.order ?? index,
+        };
+      })
+      .sort((first, second) => first.order - second.order),
+    {
+      id: JUNK_DRAWER_BOARD.id,
+      storageName: JUNK_DRAWER_BOARD.name,
+      name: JUNK_DRAWER_BOARD.name,
+      count: `${createdBrags.filter((b) => b.board === JUNK_DRAWER_BOARD.name).length} brags`,
+      detail: JUNK_DRAWER_BOARD.description,
+      privacy: "Public",
+      href: boardHref(JUNK_DRAWER_BOARD.name),
+      color: "bg-zinc-950",
+      size: JUNK_DRAWER_BOARD.size,
+      cover: JUNK_DRAWER_BOARD.cover,
+      order: Infinity,
+    },
+  ];
 
   function moveDraggedBoard(targetName: string) {
     if (!draggedBoardName || draggedBoardName === targetName) return;
@@ -225,11 +242,17 @@ export default function BoardsPage() {
       setDraftCoverMode("color");
       setDraftSolidColor(cover.color);
       setDraftCoverImage("");
-    } else {
+    } else if (cover.mode === "gradient") {
       setDraftCoverMode("gradient");
       setDraftGradientStart(cover.start);
       setDraftGradientEnd(cover.end);
       setDraftGradientAngle(cover.angle);
+      setDraftCoverImage("");
+    } else {
+      setDraftCoverMode("gradient");
+      setDraftGradientStart("#07111f");
+      setDraftGradientEnd("#2563eb");
+      setDraftGradientAngle("135");
       setDraftCoverImage("");
     }
   }
@@ -341,28 +364,31 @@ export default function BoardsPage() {
         <section className="grid grid-cols-2 gap-3 [grid-auto-flow:dense] [grid-auto-rows:minmax(0,calc((100vw-2.5rem-0.75rem)/2))] sm:gap-4 sm:[grid-auto-rows:minmax(0,calc((100vw-4rem-1rem)/2))] lg:grid-cols-5 lg:[grid-auto-rows:minmax(0,calc((min(100vw,80rem)-5rem-4rem)/5))]">
           {boardCards.map((board) => {
             const size = boardTileSizes[board.size];
-            const hasCover = Boolean(board.cover);
+            const isSystem = board.id === JUNK_DRAWER_BOARD.id;
+            const hasCover = Boolean(board.cover) && board.cover?.mode !== "emoji";
 
             return (
               <article
                 key={board.id ?? board.storageName}
-                draggable={isEditing}
+                draggable={isEditing && !isSystem}
                 onDragStart={(event) => {
+                  if (isSystem) return;
                   setDraggedBoardName(board.storageName);
                   event.dataTransfer.effectAllowed = "move";
                   event.dataTransfer.setData("text/plain", board.storageName);
                 }}
                 onDragEnter={(event) => {
-                  if (!isEditing) return;
+                  if (!isEditing || isSystem) return;
                   event.preventDefault();
                   moveDraggedBoard(board.storageName);
                 }}
                 onDragOver={(event) => {
-                  if (!isEditing) return;
+                  if (!isEditing || isSystem) return;
                   event.preventDefault();
                   event.dataTransfer.dropEffect = "move";
                 }}
                 onDrop={(event) => {
+                  if (isSystem) return;
                   event.preventDefault();
                   moveDraggedBoard(board.storageName);
                   setDraggedBoardName("");
@@ -393,7 +419,13 @@ export default function BoardsPage() {
                     aria-label={`Open ${board.name}`}
                   />
                 ) : null}
-                {board.cover ? (
+                {board.cover?.mode === "emoji" ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="select-none text-[5rem] leading-none opacity-[0.13]">
+                      {board.cover.emoji}
+                    </span>
+                  </div>
+                ) : board.cover ? (
                   <>
                     <div
                       className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
@@ -445,7 +477,7 @@ export default function BoardsPage() {
                   </div>
 
                   <div className="min-w-0">
-                    {isEditing ? (
+                    {isEditing && !isSystem ? (
                       <button
                         type="button"
                         draggable={false}

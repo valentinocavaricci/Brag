@@ -228,7 +228,7 @@ export default function ArcPage() {
           style={coverStyle}
         >
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.22)_38%,rgba(0,0,0,0.84)_100%)]" />
-          {isCompleted ? <div className="absolute inset-0 bg-emerald-950/40 mix-blend-multiply" /> : null}
+          {isCompleted ? <div className="absolute inset-0 bg-emerald-500/15" /> : null}
           <div className="relative z-10 flex min-h-72 flex-col justify-between p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <button

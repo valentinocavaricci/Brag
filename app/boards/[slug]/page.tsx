@@ -11,6 +11,7 @@ import {
   boardCoverBackground,
   useBoardPreferences,
   useCreatedBoards,
+  JUNK_DRAWER_BOARD,
 } from "../../lib/boards";
 import { useArcMeta, deleteArcMeta } from "../../lib/arcs";
 import {
@@ -76,7 +77,8 @@ export default function BoardPage() {
   const { cheeredIds, toggleCheer } = useCheers();
   const { getArcMeta, getArcNamesForBoard, updateArcMeta } = useArcMeta();
 
-  const board = createdBoards.find((candidate) => nameToSlug(candidate.name) === slug);
+  const board = createdBoards.find((candidate) => nameToSlug(candidate.name) === slug)
+    ?? (slug === nameToSlug(JUNK_DRAWER_BOARD.name) ? JUNK_DRAWER_BOARD : undefined);
   const boardPreference = board ? preferences[board.name] : undefined;
   const displayName = boardPreference?.title?.trim() || board?.name || "Board";
   const displayDescription =
@@ -239,12 +241,14 @@ export default function BoardPage() {
     );
   }
 
-  const coverStyle = displayCover
-    ? { backgroundImage: boardCoverBackground(displayCover) }
-    : {
-        backgroundImage:
-          "radial-gradient(circle at 20% 24%, rgba(56,189,248,0.55), transparent 34%), linear-gradient(135deg, #07111f 0%, #12345b 54%, #0f766e 100%)",
-      };
+  const defaultCoverStyle = {
+    backgroundImage:
+      "radial-gradient(circle at 20% 24%, rgba(56,189,248,0.55), transparent 34%), linear-gradient(135deg, #07111f 0%, #12345b 54%, #0f766e 100%)",
+  };
+  const coverStyle =
+    displayCover && displayCover.mode !== "emoji"
+      ? { backgroundImage: boardCoverBackground(displayCover) }
+      : defaultCoverStyle;
 
   return (
     <main className="min-h-screen bg-[#fbfbfb] pb-28 text-zinc-950 md:pb-0">
@@ -538,7 +542,7 @@ export default function BoardPage() {
               ) : null}
 
               {arcs.filter((arc) => arcFilter === "all" || (arcFilter === "complete" ? arc.meta.completed : !arc.meta.completed)).map((arc) => (
-                <article key={arc.name} className={`group cursor-pointer overflow-hidden rounded-2xl text-white shadow-sm shadow-zinc-200 ${arc.meta.completed ? "bg-zinc-800" : "bg-zinc-950"}`} onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
+                <article key={arc.name} className={`group cursor-pointer overflow-hidden rounded-2xl text-white shadow-sm shadow-zinc-200 transition-all duration-300 ease-out hover:scale-[1.015] hover:shadow-lg hover:shadow-zinc-300/60 ${arc.meta.completed ? "bg-zinc-800" : "bg-zinc-950"}`} onClick={() => router.push(`/boards/${slug}/arcs/${nameToSlug(arc.name)}`)}>
                   <div className={`flex min-h-36 flex-col justify-between p-5 ${
                     arc.meta.completed
                       ? "bg-[radial-gradient(circle_at_20%_20%,rgba(134,239,172,0.16),transparent_40%),linear-gradient(135deg,#18181b,#3f3f46)]"
