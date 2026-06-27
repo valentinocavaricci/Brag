@@ -13,6 +13,7 @@ import {
   useCreatedBoards,
 } from "../lib/boards";
 import { useCreatedBrags, usePinnedBoards, boardHref, formatBragDate } from "../lib/brags";
+import { useArcMeta } from "../lib/arcs";
 import { useProfileSettings } from "../lib/profile";
 
 const initialClique = [
@@ -57,9 +58,14 @@ export default function ProfilePage() {
   const [clique, setClique] = useState(initialClique);
   const [boardView, setBoardView] = useState<"grid" | "list">("grid");
   const [boardFilter, setBoardFilter] = useState<BoardFilter>("All");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"boards" | "bragtivity">("boards");
 
+  const { getArcMeta, getArcNamesForBoard } = useArcMeta();
   const arcCount = new Set(createdBrags.map((b) => b.arc).filter(Boolean)).size;
+  const completedArcCount = createdBoards.reduce((sum, board) => {
+    return sum + getArcNamesForBoard(board.name).filter((arc) => getArcMeta(board.name, arc).completed).length;
+  }, 0);
   const profileStats = [
     { label: "Boards", value: String(createdBoards.length) },
     { label: "Arcs", value: String(arcCount) },
@@ -112,6 +118,8 @@ export default function ProfilePage() {
       >
         <AppNav active="Profile" />
 
+        <div className={`grid transition-all duration-300 ease-in-out ${activeTab === "bragtivity" ? "pointer-events-none [grid-template-rows:0fr] opacity-0" : "[grid-template-rows:1fr] opacity-100"}`}>
+        <div className="overflow-hidden">
         <header className="pb-2">
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
             <Link
@@ -201,7 +209,8 @@ export default function ProfilePage() {
             </div>
           </div>
         </header>
-
+        </div>
+        </div>
 
         <section className="-mt-4">
           {/* Title switcher — always visible */}
@@ -210,14 +219,14 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("boards")}
-                className={`font-black tracking-tight transition-all duration-300 ease-out ${activeTab === "boards" ? "text-3xl text-zinc-950 sm:text-4xl" : "text-xl text-zinc-400 transition-transform duration-200 hover:scale-105 hover:text-zinc-600 sm:text-2xl"}`}
+                className={`font-black tracking-tight transition-all duration-300 ease-out ${activeTab === "boards" ? "text-3xl text-zinc-950 sm:text-4xl" : "text-xl text-zinc-400 hover:scale-105 hover:text-zinc-600 sm:text-2xl"}`}
               >
                 Brag Boards
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("bragtivity")}
-                className={`font-black tracking-tight transition-all duration-300 ease-out ${activeTab === "bragtivity" ? "text-3xl text-zinc-950 sm:text-4xl" : "text-xl text-zinc-400 transition-transform duration-200 hover:scale-105 hover:text-zinc-600 sm:text-2xl"}`}
+                className={`font-black tracking-tight transition-all duration-300 ease-out ${activeTab === "bragtivity" ? "text-3xl text-zinc-950 sm:text-4xl" : "text-xl text-zinc-400 hover:scale-105 hover:text-zinc-600 sm:text-2xl"}`}
               >
                 Bragtivity
               </button>
@@ -225,16 +234,32 @@ export default function ProfilePage() {
 
             {activeTab === "boards" ? (
               <div className="flex shrink-0 items-center gap-2">
-                {boardFilters.map((f) => (
+                <div className="relative">
                   <button
-                    key={f}
                     type="button"
-                    onClick={() => setBoardFilter(f)}
-                    className={`h-7 rounded-full px-3 text-xs font-black transition-all duration-200 ease-out active:scale-95 ${boardFilter === f ? "bg-zinc-950 text-white shadow-sm shadow-zinc-400/30" : "bg-zinc-100 text-zinc-500 hover:-translate-y-0.5 hover:bg-white hover:text-zinc-950 hover:shadow-sm hover:shadow-zinc-300"}`}
+                    onClick={() => setFilterOpen((o) => !o)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-zinc-100 pl-3 pr-2.5 text-xs font-black text-zinc-600 transition hover:bg-zinc-200 active:scale-95"
                   >
-                    {f}
+                    {boardFilter}
+                    <svg className={`h-3 w-3 transition-transform duration-200 ${filterOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
                   </button>
-                ))}
+                  {filterOpen ? (
+                    <div className="absolute right-0 top-full z-20 mt-1.5 w-28 overflow-hidden rounded-xl border border-zinc-100 bg-white shadow-lg shadow-zinc-200/60">
+                      {boardFilters.map((f) => (
+                        <button
+                          key={f}
+                          type="button"
+                          onClick={() => { setBoardFilter(f); setFilterOpen(false); }}
+                          className={`w-full px-3 py-2 text-left text-xs font-black transition hover:bg-zinc-50 ${boardFilter === f ? "text-zinc-950" : "text-zinc-400"}`}
+                        >
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
                 <div className="inline-flex h-11 rounded-full border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200">
                   <button type="button" onClick={() => setBoardView("grid")} aria-label="Grid view" className={`grid h-9 w-10 cursor-pointer place-items-center rounded-full transition ${boardView === "grid" ? "bg-zinc-950 text-white shadow-sm shadow-zinc-300" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"}`}>
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -257,77 +282,45 @@ export default function ProfilePage() {
           </div>
 
           {activeTab === "bragtivity" ? (
-            <div className="flex flex-col gap-3">
+            <div className="animate-tab-fade-up flex flex-col gap-3">
 
-              {/* Widget row 1: Stats (medium, full width) */}
-              <div className="rounded-2xl bg-zinc-950 p-5">
-                <p className="mb-4 text-[0.65rem] font-bold uppercase tracking-widest text-zinc-500">Stats</p>
-                <div className="grid grid-cols-4 gap-2">
-                  {profileStats.map((stat) => (
-                    <div key={stat.label} className="flex flex-col gap-1">
-                      <span className="text-3xl font-black tracking-tight text-white">{stat.value}</span>
-                      <span className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-500">{stat.label}</span>
+              {/* Stats row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col justify-between rounded-2xl bg-zinc-950 p-5">
+                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-500">Total Brags</p>
+                  <span className="my-2 text-7xl font-black leading-none tracking-tight text-white">{createdBrags.length}</span>
+                  <p className="text-xs font-semibold text-zinc-500">logged</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { label: "Boards", value: String(createdBoards.length), color: "text-zinc-950" },
+                    { label: "Arcs", value: String(arcCount), color: "text-zinc-950" },
+                    { label: "Completed", value: String(completedArcCount), color: "text-emerald-500" },
+                  ].map((s) => (
+                    <div key={s.label} className="flex flex-1 flex-col justify-between rounded-2xl bg-zinc-100 px-4 py-3">
+                      <span className={`text-2xl font-black tracking-tight ${s.color}`}>{s.value}</span>
+                      <span className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">{s.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Widget row 2: Clique (small, 1 col) + This Week (small, 1 col) */}
-              <div className="grid grid-cols-2 gap-3">
-
-                {/* Clique widget */}
-                <button
-                  type="button"
-                  onClick={() => setIsCliqueEditorOpen(true)}
-                  className="group flex flex-col justify-between rounded-2xl bg-zinc-100 p-5 text-left transition-all duration-200 hover:bg-zinc-200/70 active:scale-[0.97]"
-                >
-                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">My Clique</p>
-                  <div className="my-3 flex items-center">
-                    {clique.slice(0, 4).map((person, i) => (
-                      <div
-                        key={person.name}
-                        className="relative h-9 w-9 overflow-hidden rounded-full border-2 border-zinc-100 shadow-sm"
-                        style={{ marginLeft: i === 0 ? 0 : "-0.6rem", zIndex: clique.length - i }}
-                      >
-                        <Image src={person.avatar} alt={person.name} fill className="object-cover" />
-                      </div>
-                    ))}
-                    {clique.length > 4 ? (
-                      <div className="relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-100 bg-zinc-300 text-[0.6rem] font-black text-zinc-600" style={{ marginLeft: "-0.6rem" }}>
-                        +{clique.length - 4}
-                      </div>
-                    ) : null}
-                  </div>
-                  <p className="text-xs font-semibold text-zinc-500">{clique.length} people</p>
-                </button>
-
-                {/* This Week widget */}
-                <div className="flex flex-col justify-between rounded-2xl bg-zinc-950 p-5">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-500">This Week</p>
-                  <span className="my-3 text-5xl font-black tracking-tight text-white">
-                    {createdBrags.filter((b) => Date.now() - new Date(b.time).getTime() < 7 * 24 * 60 * 60 * 1000).length}
-                  </span>
-                  <p className="text-xs font-semibold text-zinc-500">brags logged</p>
-                </div>
-
-              </div>
-
-              {/* Recent Brags feed */}
+              {/* Recent Brags */}
               <div>
-                <p className="mb-3 mt-1 text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">Recent Brags</p>
+                <p className="mb-1 mt-2 text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">Recent Brags</p>
                 {createdBrags.length === 0 ? (
                   <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-zinc-200">
                     <p className="text-sm font-semibold text-zinc-400">No brags yet. Go brag something.</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {createdBrags.slice(0, 8).map((brag) => (
+                  <div className="flex flex-col divide-y divide-zinc-100">
+                    {createdBrags.slice(0, 10).map((brag) => (
                       <Link
                         key={brag.id}
                         href={boardHref(brag.board)}
-                        className="group flex items-start gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-200 hover:shadow-sm hover:shadow-zinc-200"
+                        className="group flex items-center gap-3 py-3 transition-opacity hover:opacity-60"
                       >
-                        <div className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full">
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
                           <Image src={brag.avatar} alt={brag.author} fill className="object-cover" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -335,11 +328,10 @@ export default function ProfilePage() {
                             <p className="truncate text-sm font-black text-zinc-950">{brag.title || brag.board}</p>
                             <span className="shrink-0 text-[0.65rem] font-semibold text-zinc-400">{formatBragDate(brag)}</span>
                           </div>
-                          <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-relaxed text-zinc-500">{brag.text}</p>
-                          <span className="mt-1.5 inline-block rounded-full bg-zinc-200/70 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-zinc-500">{brag.board}</span>
+                          <p className="line-clamp-1 text-xs text-zinc-500">{brag.text}</p>
                         </div>
                         {brag.image ? (
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
                             <Image src={brag.image} alt="" fill className="object-cover" />
                           </div>
                         ) : null}
@@ -352,7 +344,7 @@ export default function ProfilePage() {
             </div>
           ) : null}
 
-          {activeTab !== "boards" ? null : <>
+          {activeTab !== "boards" ? null : <div className="animate-tab-fade-up">
 
           {/* GRID VIEW */}
           {boardView === "grid" ? (
@@ -443,7 +435,7 @@ export default function ProfilePage() {
             )
           ) : null}
 
-          </>}
+          </div>}
         </section>
       </section>
 
